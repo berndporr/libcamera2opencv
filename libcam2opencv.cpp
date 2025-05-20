@@ -326,6 +326,22 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings) {
 	int64_t frame_time = 1000000 / settings.framerate; // in us
 	controls.set(libcamera::controls::FrameDurationLimits, libcamera::Span<const int64_t, 2>({ frame_time, frame_time }));
     }
+    if (settings.lensPosition >= 0) {
+	controls.set(libcamera::controls::LensPosition, settings.lensPosition);
+    }
+
+    if (settings.exposureTime > 0) {
+        controls.set(libcamera::controls::ExposureTime, settings.exposureTime); // in µs
+    }
+    
+    if (settings.exposureValue != 0.0f) {
+        controls.set(libcamera::controls::ExposureValue, settings.exposureValue);
+    }
+    
+    if (settings.saturation != 1.0f) { // Check if saturation is different from the default
+        controls.set(libcamera::controls::Saturation, settings.saturation);
+    }
+    
     controls.set(libcamera::controls::Brightness,settings.brightness);
     controls.set(libcamera::controls::Contrast,settings.contrast);
 
