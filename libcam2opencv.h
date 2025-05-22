@@ -53,6 +53,26 @@ struct Libcam2OpenCVSettings {
      * Contrast
      **/
     float contrast = 1.0;
+    
+    /**
+     * Exposure Time (in microseconds). A zero lets libcamera decide the exposure time.
+     **/
+    int64_t exposureTime = 0;
+    
+    /**
+     * Exposure Value (EV) adjustment. By convention EV adjusts the exposure as log2. For example EV = [-2, -1, -0.5, 0, 0.5, 1, 2] results in an exposure adjustment of [1/4x, 1/2x, 1/sqrt(2)x, 1x, sqrt(2)x, 2x, 4x].
+     **/
+    float exposureValue = 0.0;
+    
+    /**
+     * Saturation adjustment. Default is 1.0, 0.0 is greyscale
+     **/
+    float saturation = 1.0f;
+    /**
+     * Set the focus position (e.g. for Raspberry Pi Camera Module 3). (Lensposition) 0.0 is closes, 1.0 is furthest. Keep at < 0 for auto
+     **/
+    float lensPosition = -1.0f;
+     
 };
 
 class Libcam2OpenCV {
