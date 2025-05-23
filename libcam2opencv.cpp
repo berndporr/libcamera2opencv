@@ -82,6 +82,7 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings) {
      * Just as a test, generate names of the Cameras registered in the
      * system, and list them.
      */
+    std::cerr << "Cams:" << std::endl;
     for (auto const &camera : cm->cameras())
 	std::cerr << " - " << camera.get()->id() << std::endl;
 	
@@ -98,14 +99,6 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings) {
      *
      * Application lock usage of Camera by 'acquiring' them.
      * Once done with it, application shall similarly 'release' the Camera.
-     *
-     * As an example, use the first available camera in the system after
-     * making sure that at least one camera is available.
-     *
-     * Cameras can be obtained by their ID or their index, to demonstrate
-     * this, the following code gets the ID of the first camera; then gets
-     * the camera associated with that ID (which is of course the same as
-     * cm->cameras()[0]).
      */
     if (cm->cameras().empty()) {
 	std::cerr << "No cameras were identified on the system."
@@ -114,7 +107,14 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings) {
 	return;
     }
 
-    std::string cameraId = cm->cameras()[0]->id();
+    if (settings.cameraIndex >= cm->cameras().size() ) {
+	std::cerr << "Camera index out of range."
+		  << std::endl;
+	cm->stop();
+	return;
+    }
+
+    std::string cameraId = cm->cameras()[settings.cameraIndex]->id();
     camera = cm->get(cameraId);
     camera->acquire();
 
@@ -231,7 +231,7 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings) {
      * instance and referencing a configured Camera to determine the
      * appropriate buffer size and types to create.
      */
-    allocator = new libcamera::FrameBufferAllocator(camera);
+    allocator = std::make_unique<libcamera::FrameBufferAllocator>(camera);
 
     for (libcamera::StreamConfiguration &cfg : *config) {
 	int ret = allocator->allocate(cfg.stream());
@@ -366,18 +366,12 @@ void Libcam2OpenCV::stop() {
      * Stop the Camera, release resources and stop the CameraManager.
      * libcamera has now released all resources it owned.
      */
-    if (nullptr != camera) {
+    if (camera) {
 	camera->stop();
-	allocator->free(stream);
+	if (allocator) allocator->free(stream);
 	camera->release();
 	camera.reset();
+	allocator.reset();
     }
-    if (nullptr != cm) {
-	cm->stop();
-	cm.reset();
-    }
-    if (nullptr != allocator) {
-	delete allocator;
-	allocator = nullptr;
-    }
+    cm->stop();
 }

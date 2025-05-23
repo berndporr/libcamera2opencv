@@ -30,6 +30,11 @@
  **/
 struct Libcam2OpenCVSettings {
     /**
+     * Index of the camera used. Default is 0.
+     **/
+    unsigned int cameraIndex = 0;
+    
+    /**
      * Width of the video capture. A zero lets libcamera decide the width.
      **/
     unsigned int width = 0;
@@ -99,6 +104,10 @@ public:
      * Stops the camera and the callback
      **/
     void stop();
+
+    ~Libcam2OpenCV() {
+	stop();
+    }
     
 private:
     std::shared_ptr<libcamera::Camera> camera;
@@ -106,7 +115,7 @@ private:
     std::unique_ptr<libcamera::CameraConfiguration> config;
     cv::Mat frame;
     Callback* callback = nullptr;
-    libcamera::FrameBufferAllocator* allocator = nullptr;
+    std::unique_ptr<libcamera::FrameBufferAllocator> allocator;
     libcamera::Stream *stream = nullptr;
     std::unique_ptr<libcamera::CameraManager> cm;
     std::vector<std::unique_ptr<libcamera::Request>> requests;
