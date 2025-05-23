@@ -1,8 +1,7 @@
 # Raspberry PI libcamera to openCV library with callback
 
 This is a wrapper around libcamera which makes it a lot easier to establish
-a callback containing an openCV matrix. This can then be processed by opencv
-and then displayed with QT.
+a callback containing an openCV matrix.
 
 ## Prerequisites
 
@@ -25,7 +24,6 @@ sudo make install
  2. Create your custom callback
 ```
     struct MyCallback : Libcam2OpenCV::Callback {
-        Window* window = nullptr;
         virtual void hasFrame(const cv::Mat &frame, const libcamera:ControlList &) {
             if (nullptr != window) {
                 window->updateImage(frame);
@@ -73,3 +71,8 @@ check the framerate.
 The subdirectory `qtviewer` contains a simple QT application
 which displays the camera on screen and the value of one pixel
 as a thermometer with QWT.
+
+## Credits
+
+Based on https://github.com/kbingham/simple-cam and then turned into this library by Bernd Porr.
+Additional features by Raphael Nekam.
