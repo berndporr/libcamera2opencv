@@ -70,8 +70,7 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings) {
      * applications can operate on.
      *
      * When the CameraManager is no longer to be used, it should be deleted.
-     * We use a unique_ptr here to manage the lifetime automatically during
-     * the scope of this function.
+     * We use a unique_ptr here to manage the lifetime automatically.
      *
      * There can only be a single CameraManager constructed within any
      * process space.
@@ -114,7 +113,7 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings) {
 	cm->stop();
 	return;
     }
-	
+
     std::string cameraId = cm->cameras()[0]->id();
     camera = cm->get(cameraId);
     camera->acquire();
@@ -241,24 +240,21 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings) {
 	    return;
 	}
 	    
-	for (const std::unique_ptr<libcamera::FrameBuffer> &buffer : allocator->buffers(cfg.stream()))
-	    {
-		// "Single plane" buffers appear as multi-plane here, but we can spot them because then
-		// planes all share the same fd. We accumulate them so as to mmap the buffer only once.
-		size_t buffer_size = 0;
-		for (unsigned i = 0; i < buffer->planes().size(); i++)
-		    {
-			const libcamera::FrameBuffer::Plane &plane = buffer->planes()[i];
-			buffer_size += plane.length;
-			if (i == buffer->planes().size() - 1 || plane.fd.get() != buffer->planes()[i + 1].fd.get())
-			    {
-				void *memory = mmap(NULL, buffer_size, PROT_READ | PROT_WRITE, MAP_SHARED, plane.fd.get(), 0);
-				mapped_buffers[buffer.get()].push_back(
-								       libcamera::Span<uint8_t>(static_cast<uint8_t *>(memory), buffer_size));
-				buffer_size = 0;
-			    }
-		    }
+	for (const std::unique_ptr<libcamera::FrameBuffer> &buffer : allocator->buffers(cfg.stream())) {
+	    // "Single plane" buffers appear as multi-plane here, but we can spot them because then
+	    // planes all share the same fd. We accumulate them so as to mmap the buffer only once.
+	    size_t buffer_size = 0;
+	    for (unsigned i = 0; i < buffer->planes().size(); i++) {
+		const libcamera::FrameBuffer::Plane &plane = buffer->planes()[i];
+		buffer_size += plane.length;
+		if (i == buffer->planes().size() - 1 || plane.fd.get() != buffer->planes()[i + 1].fd.get()) {
+		    void *memory = mmap(NULL, buffer_size, PROT_READ | PROT_WRITE, MAP_SHARED, plane.fd.get(), 0);
+		    mapped_buffers[buffer.get()].push_back(libcamera::Span<uint8_t>(static_cast<uint8_t *>(memory),
+										    buffer_size));
+		    buffer_size = 0;
+		}
 	    }
+	}
     }
 	
     /*
@@ -326,10 +322,11 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings) {
 	int64_t frame_time = 1000000 / settings.framerate; // in us
 	controls.set(libcamera::controls::FrameDurationLimits, libcamera::Span<const int64_t, 2>({ frame_time, frame_time }));
     }
+    
     if (settings.lensPosition >= 0) {
 	controls.set(libcamera::controls::LensPosition, settings.lensPosition);
     }
-
+    
     if (settings.exposureTime > 0) {
         controls.set(libcamera::controls::ExposureTime, settings.exposureTime); // in µs
     }
@@ -369,10 +366,18 @@ void Libcam2OpenCV::stop() {
      * Stop the Camera, release resources and stop the CameraManager.
      * libcamera has now released all resources it owned.
      */
-    camera->stop();
-    allocator->free(stream);
-    camera->release();
-    camera.reset();
-    cm->stop();
-    delete allocator;
+    if (nullptr != camera) {
+	camera->stop();
+	allocator->free(stream);
+	camera->release();
+	camera.reset();
+    }
+    if (nullptr != cm) {
+	cm->stop();
+	cm.reset();
+    }
+    if (nullptr != allocator) {
+	delete allocator;
+	allocator = nullptr;
+    }
 }

@@ -68,6 +68,7 @@ struct Libcam2OpenCVSettings {
      * Saturation adjustment. Default is 1.0, 0.0 is greyscale
      **/
     float saturation = 1.0f;
+
     /**
      * Set the focus position (e.g. for Raspberry Pi Camera Module 3). (Lensposition) 0.0 is closes, 1.0 is furthest. Keep at < 0 for auto
      **/
