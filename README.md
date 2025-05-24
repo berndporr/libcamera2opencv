@@ -72,6 +72,8 @@ The subdirectory `qtviewer` contains a simple QT application
 which displays the camera on screen and the value of one pixel
 as a thermometer with QWT.
 
+![alt tag](qtviewer_screenshot.png)
+
 ## Credits
 
 Based on https://github.com/kbingham/simple-cam and then turned into this library by Bernd Porr.
