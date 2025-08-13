@@ -22,7 +22,9 @@ public:
 
     QwtThermo    *thermo;
     QHBoxLayout  *hLayout;  // horizontal layout
+    QVBoxLayout  *vLayout;  // vert layout
     QLabel       *image;
+    QLabel       *info;
 
     struct MyCallback : Libcam2OpenCV::Callback {
 	Window* window = nullptr;

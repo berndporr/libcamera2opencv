@@ -18,7 +18,13 @@ Window::Window()
 	hLayout->addWidget(thermo);
 	hLayout->addWidget(image);
 
-	setLayout(hLayout);
+	vLayout = new QVBoxLayout();
+	vLayout->addLayout(hLayout);
+
+	info = new QLabel;
+	vLayout->addWidget(info);
+
+	setLayout(vLayout);
 	camera.start();
 }
 
@@ -33,6 +39,9 @@ void Window::updateImage(const cv::Mat &mat) {
 	image->setPixmap(QPixmap::fromImage(frame));
 	const int h = frame.height();
 	const int w = frame.width();
+	char tmp[256];
+	sprintf(tmp,"%d x %d",w,h);
+	info->setText(tmp);
 	const QColor c = frame.pixelColor(w/2, h/2);
 	thermo->setValue(c.lightness());
 	update();
