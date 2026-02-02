@@ -113,7 +113,6 @@ private:
     std::shared_ptr<libcamera::Camera> camera;
     std::map<libcamera::FrameBuffer *, std::vector<libcamera::Span<uint8_t>>> mapped_buffers;
     std::unique_ptr<libcamera::CameraConfiguration> config;
-    cv::Mat frame;
     Callback* callback = nullptr;
     std::unique_ptr<libcamera::FrameBufferAllocator> allocator;
     libcamera::Stream *stream = nullptr;

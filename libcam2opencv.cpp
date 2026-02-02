@@ -36,6 +36,7 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request) {
 	unsigned int vh = streamConfig.size.height;
 	unsigned int vstr = streamConfig.stride;
 	auto mem = Mmap(buffer);
+        cv::Mat frame;
 	frame.create(vh,vw,CV_8UC3);
 	uint ls = vw*3;
 	uint8_t *ptr = mem[0].data();
@@ -195,7 +196,7 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings) {
     }
 
     // opencv compatible format
-    streamConfig.pixelFormat = libcamera::formats::BGR888;
+    streamConfig.pixelFormat = libcamera::formats::RGB888;
 
     /*
      * Validating a CameraConfiguration -before- applying it will adjust it

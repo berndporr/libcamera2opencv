@@ -35,7 +35,7 @@ Window::~Window()
 
 void Window::updateImage(const cv::Mat &mat) {
 	const QImage frame(mat.data, mat.cols, mat.rows, mat.step,
-			   QImage::Format_RGB888);
+			   QImage::Format_BGR888);
 	image->setPixmap(QPixmap::fromImage(frame));
 	const int h = frame.height();
 	const int w = frame.width();
