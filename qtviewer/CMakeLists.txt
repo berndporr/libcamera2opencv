@@ -16,7 +16,7 @@ find_package(PkgConfig)
 
 find_package(OpenCV REQUIRED)
 
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(Qt6 COMPONENTS Widgets REQUIRED)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -41,7 +41,6 @@ add_executable(qtviewer
 )
 
 target_link_libraries(qtviewer PkgConfig::LIBCAMERA)
-target_link_libraries(qtviewer Qt5::Widgets)
-target_link_libraries(qtviewer qwt-qt5)
+target_link_libraries(qtviewer Qt6::Widgets)
 target_link_libraries(qtviewer ${OpenCV_LIBS})
 target_link_libraries(qtviewer cam2opencv)
