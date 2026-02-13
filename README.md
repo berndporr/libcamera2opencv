@@ -69,8 +69,7 @@ check the framerate.
 ### QT Image Viewer
 
 The subdirectory `qtviewer` contains a simple QT application
-which displays the camera on screen and the value of one pixel
-as a thermometer with QWT.
+which displays the camera on screen.
 
 ![alt tag](qtviewer_screenshot.png)
 

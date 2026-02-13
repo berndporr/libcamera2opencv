@@ -3,7 +3,7 @@
 ## Prerequisites
 
 ```
-apt install libopencv-dev libcamera-dev libqwt-qt5-dev qtdeclarative5-dev
+apt install libopencv-dev libcamera-dev qt6-base-dev
 ```
 
 ## Compilation and running it
