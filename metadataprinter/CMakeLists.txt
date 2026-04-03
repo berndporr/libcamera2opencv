@@ -19,6 +19,4 @@ add_executable(printdata
   printdata.cpp
 )
 
-target_link_libraries(printdata PkgConfig::LIBCAMERA)
-target_link_libraries(printdata ${OpenCV_LIBS})
-target_link_libraries(printdata cam2opencv)
+target_link_libraries(printdata turbojpeg PkgConfig::LIBCAMERA ${OpenCV_LIBS} cam2opencv)

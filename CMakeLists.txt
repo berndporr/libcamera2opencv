@@ -13,8 +13,8 @@ set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_FLAGS "-pedantic -Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wno-unused-parameter")
 
 find_package(PkgConfig)
-
 find_package(OpenCV REQUIRED)
+pkg_check_modules(TURBOJPEG REQUIRED libturbojpeg)
 
 pkg_check_modules(LIBCAMERA REQUIRED IMPORTED_TARGET libcamera)
 message(STATUS "libcamera library found:")
@@ -33,8 +33,7 @@ add_subdirectory(metadataprinter)
 
 add_library(cam2opencv STATIC libcam2opencv.cpp)
 
-target_link_libraries(cam2opencv PkgConfig::LIBCAMERA)
-target_link_libraries(cam2opencv ${OpenCV_LIBS})
+target_link_libraries(cam2opencv PkgConfig::LIBCAMERA ${OpenCV_LIBS} turbojpeg)
 
 set_target_properties(cam2opencv PROPERTIES
   PUBLIC_HEADER libcam2opencv.h)

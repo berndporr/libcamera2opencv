@@ -10,7 +10,7 @@ project(CamViewer
 
 set (CMAKE_CXX_STANDARD 17)
 
-set (CMAKE_CXX_FLAGS "-Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wno-unused-parameter")
+set (CMAKE_CXX_FLAGS "-Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wno-unused-parameter -L..")
 
 find_package(PkgConfig)
 
@@ -32,7 +32,7 @@ message(STATUS "opencv:")
 message(STATUS "    version: ${OpenCV_VERSION}")
 message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 
-include_directories(${CMAKE_SOURCE_DIR} ${LIBCAMERA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR} ${LIBCAMERA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS} ..)
 include(GNUInstallDirs)
 
 add_executable(qtviewer
@@ -44,3 +44,4 @@ target_link_libraries(qtviewer PkgConfig::LIBCAMERA)
 target_link_libraries(qtviewer Qt6::Widgets)
 target_link_libraries(qtviewer ${OpenCV_LIBS})
 target_link_libraries(qtviewer cam2opencv)
+target_link_libraries(qtviewer turbojpeg)
