@@ -1,6 +1,5 @@
 #include "libcam2opencv.h"
 #include <unistd.h>
-#include <turbojpeg.h>
 #include <stdexcept>
 
 void Libcam2OpenCV::requestComplete(libcamera::Request *request)
@@ -47,18 +46,13 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
         cv::Mat frame(vh, vw, CV_8UC3);
         if (streamConfig.pixelFormat == libcamera::formats::MJPEG)
         {
-            tjhandle tjInstance = tjInitDecompress();
-            if (!tjInstance)
-                throw std::runtime_error("Failed to initialize TurboJPEG decompressor");
-
             int jpegSubsamp, jpegColorspace;
 
             // Read JPEG header
             if (tjDecompressHeader3(tjInstance, ptr, imageSize,
                                     &vw, &vh, &jpegSubsamp, &jpegColorspace) != 0)
             {
-                tjDestroy(tjInstance);
-                throw std::runtime_error(tjGetErrorStr());
+                std::cerr << tjGetErrorStr() << std::endl;
             }
 
             // Decompress to RGB
@@ -66,11 +60,8 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
                               frame.data, vw, 0, vh,
                               TJPF_BGR, TJFLAG_FASTDCT) != 0)
             {
-                tjDestroy(tjInstance);
-                throw std::runtime_error(tjGetErrorStr());
+                std::cerr << tjGetErrorStr() << std::endl;
             }
-
-            tjDestroy(tjInstance);
         }
         else
         {
@@ -100,6 +91,10 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
 
 void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
 {
+    tjInstance = tjInitDecompress();
+    if (!tjInstance)
+        throw std::runtime_error("Failed to initialize TurboJPEG decompressor.");
+
     /*
      * --------------------------------------------------------------------
      * Create a Camera Manager.
@@ -454,6 +449,7 @@ void Libcam2OpenCV::stop()
         camera->release();
         camera.reset();
         delete allocator;
+        tjDestroy(tjInstance);
     }
     cm->stop();
 }

@@ -16,6 +16,7 @@
 #include <memory>
 #include <sys/mman.h>
 #include <opencv2/opencv.hpp>
+#include <turbojpeg.h>
 
 // need to undefine QT defines here as libcamera uses the same expressions (!).
 #undef signals
@@ -123,6 +124,7 @@ private:
     std::unique_ptr<libcamera::CameraManager> cm;
     std::vector<std::unique_ptr<libcamera::Request>> requests;
     libcamera::ControlList controls;
+    tjhandle tjInstance;
 
     /*
      * --------------------------------------------------------------------
