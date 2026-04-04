@@ -122,8 +122,7 @@ private:
     std::vector<std::unique_ptr<libcamera::Request>> requests;
     libcamera::ControlList controls;
     tjhandle tjInstance;
-    std::atomic<bool> isRunning{false};
-    int64_t frame_time = 0;
+    std::mutex shutdown_mutex;
 
     /*
      * --------------------------------------------------------------------

@@ -9,6 +9,7 @@
 
 void Libcam2OpenCV::requestComplete(libcamera::Request *request)
 {
+    std::lock_guard<std::mutex> guard(shutdown_mutex);
     if (nullptr == request)
         return;
     if (request->status() == libcamera::Request::RequestCancelled)
@@ -84,8 +85,6 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
         }
     }
 
-    if (!isRunning)
-        return;
     /* Re-queue the Request to the camera. */
     request->reuse(libcamera::Request::ReuseBuffers);
     camera->queueRequest(request);
@@ -93,6 +92,10 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
 
 void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
 {
+    /**
+     * Create a turbo jpeg decompressor. That's needed for webcams which transmit
+     * MJPEG.
+     */
     tjInstance = tjInitDecompress();
     if (!tjInstance)
         throw std::runtime_error("Failed to initialize TurboJPEG decompressor.");
@@ -118,8 +121,8 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
     cm->start();
 
     /*
-     * Just as a test, generate names of the Cameras registered in the
-     * system, and list them.
+     * List the names of the Cameras registered in the
+     * system.
      */
     std::cerr << "Cams:" << std::endl;
     for (auto const &camera : cm->cameras())
@@ -232,7 +235,6 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
         int ret = camera->configure(config.get());
         if (ret)
         {
-            std::cerr << "CONFIGURATION FAILED!" << std::endl;
             throw std::runtime_error("Could not config camera.");
         }
     }
@@ -247,7 +249,7 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
      */
     config->validate();
 
-    std::cerr << "Stream configuration adjusted to "
+    std::cerr << "Stream configuration adjusted to: "
               << streamConfig.toString() << std::endl;
 
     /*
@@ -256,7 +258,14 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
      */
     camera->configure(config.get());
 
-    /* Allocate and map buffers. */
+    /*
+     * Allocate memory for every frame buffer. Every stream can have multiple
+     * frame buffers, for example for double buffering. How many are needed
+     * is decided by libcamera. We let libcamera allocate as many as it needs.
+     * What complicates things is that framebuffers are distingished by their
+     * mmap file descriptors. We need to do the mapping from the file descriptors
+     * to the physical addresses.
+     */
     allocator = std::make_unique<libcamera::FrameBufferAllocator>(camera);
     for (libcamera::StreamConfiguration &config : *config)
     {
@@ -265,20 +274,22 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
         int ret = allocator->allocate(stream);
         if (ret < 0)
         {
-            std::cerr << "Failed to allocate capture buffers.";
             throw std::runtime_error("Failed to allocate capture buffers.");
         }
 
-        // Every framebuffer has a physical memory location which is linked to an mmap
-        // file descriptor.
+        // Every framebuffer has a physical memory location which is described by
+        // an mmap file descriptor. We need to find here the actual physical address
+        // range and store this. While there is only one file descriptor the actual
+        // physical address space might be split over a number of planes.
         for (const std::unique_ptr<libcamera::FrameBuffer> &buffer : allocator->buffers(stream))
         {
-            // We care only about the 1st fd in the 1st plane. However, that very fd might
-            // show up not just in the 1st plane but also in other planes. Or in other words:
-            // a single mmap might be spread over different planes. We need to sum up the
+            // We assume that we have only relevant file descriptor and we take the one
+            // in the 1st plane. However, that very fd might show up not just in the 1st 
+            // plane but also in other planes. Or in other words:
+            // A single mmap might be spread over different planes. We need to sum up the
             // different memory fragments in the planes to get the total size of the mmap.
             const int firstfd = buffer->planes()[0].fd.get();
-            // calc the total size of the mmap buffer
+            // calc the total size of the mmap buffer spanning various planes
             size_t total_buffer_size = 0;
             for (const libcamera::FrameBuffer::Plane &plane : buffer->planes())
             {
@@ -288,11 +299,14 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
                     total_buffer_size += plane.length;
                 }
             }
+            // We could have omitted the loop above and just taken the total
+            // size of the mmap region using the fd:
             const size_t mmaplength = lseek(firstfd, 0, SEEK_END);
+            // But now we can compare if the accumulated planes have the same size as the mmap fd.
             if (total_buffer_size != mmaplength)
             {
                 fprintf(stderr,
-                        "Fatal: accumulated plane lengths [%lu] != mmap lenghth[%lu]\n", 
+                        "Fatal/BUG?: accumulated plane lengths [%lu] != mmap lenghth[%lu]\n",
                         total_buffer_size, mmaplength);
                 throw std::runtime_error("Fatal: accumulated plane buffer length has not the size of mmap.");
             }
@@ -300,9 +314,6 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
                                                MAP_SHARED, firstfd, 0);
             if (((void *)address) == MAP_FAILED)
             {
-                int error = -errno;
-                std::cerr << "Failed to mmap plane: "
-                          << strerror(-error) << std::endl;
                 throw std::runtime_error("Failed to mmap plane.");
             }
             // Store the mmapped address range as a span
@@ -374,8 +385,9 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
 
     if (settings.framerate > 0)
     {
-        frame_time = 1000000 / settings.framerate; // in us
-        controls.set(libcamera::controls::FrameDurationLimits, libcamera::Span<const int64_t, 2>({frame_time, frame_time}));
+        const int64_t frame_time = 1000000 / settings.framerate; // in us
+        const auto frameRateRange = libcamera::Span<const int64_t, 2>({frame_time, frame_time});
+        controls.set(libcamera::controls::FrameDurationLimits, frameRateRange);
     }
 
     if (settings.lensPosition >= 0)
@@ -412,7 +424,6 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
      * For each delivered frame, the Slot connected to the
      * Camera::requestCompleted Signal is called.
      */
-    isRunning = true;
     camera->start(&controls);
     for (std::unique_ptr<libcamera::Request> &request : requests)
         camera->queueRequest(request.get());
@@ -427,10 +438,16 @@ void Libcam2OpenCV::stop()
      * Stop the Camera, release resources and stop the CameraManager.
      * libcamera has now released all resources it owned.
      */
-    isRunning = false;
-    usleep(frame_time);
     if (camera)
     {
+        // Disconnecting the completion handler so that it won't trigger
+        // a new frame request.
+        camera->requestCompleted.disconnect(this);
+        // We need to wait here till the final completion handler has finished
+        // to prevent a segfault.
+        std::lock_guard<std::mutex> guard(shutdown_mutex);
+        // Now we can safely stop the camera knowing that no completion handler
+        // is active any more.
         camera->stop();
         if (allocator)
             allocator->free(stream);
@@ -438,7 +455,9 @@ void Libcam2OpenCV::stop()
         camera->release();
         camera.reset();
     }
-    cm->stop();
+    if (cm)
+        cm->stop();
+    cm.reset();
     if (tjInstance)
     {
         tjDestroy(tjInstance);
