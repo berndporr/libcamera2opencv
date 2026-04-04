@@ -14,6 +14,7 @@
 #include <chrono>
 #include <thread>
 #include <memory>
+#include <atomic>
 #include <sys/mman.h>
 #include <opencv2/opencv.hpp>
 #include <turbojpeg.h>
@@ -116,7 +117,7 @@ public:
 
 private:
     std::shared_ptr<libcamera::Camera> camera;
-	std::map<libcamera::FrameBuffer *, std::vector<libcamera::Span<uint8_t>>> mappedPlanes;
+	std::map<libcamera::FrameBuffer *, libcamera::Span<uint8_t>> mapped1stPlane;
     std::unique_ptr<libcamera::CameraConfiguration> config;
     Callback *callback = nullptr;
     libcamera::FrameBufferAllocator* allocator;
@@ -125,6 +126,8 @@ private:
     std::vector<std::unique_ptr<libcamera::Request>> requests;
     libcamera::ControlList controls;
     tjhandle tjInstance;
+    std::atomic<bool> isRunning{false};
+    int64_t frame_time = 0;
 
     /*
      * --------------------------------------------------------------------

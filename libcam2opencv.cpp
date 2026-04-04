@@ -2,6 +2,11 @@
 #include <unistd.h>
 #include <stdexcept>
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
+
 void Libcam2OpenCV::requestComplete(libcamera::Request *request)
 {
     if (nullptr == request)
@@ -35,38 +40,36 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
     const libcamera::Request::BufferMap &buffers = request->buffers();
     for (auto bufferPair : buffers)
     {
-        // it's all in the 1st plane and we ignore any other
-        const int planeNumber = 0;
         libcamera::FrameBuffer *buffer = bufferPair.second;
         libcamera::StreamConfiguration &streamConfig = config->at(0);
         int vw = streamConfig.size.width;
         int vh = streamConfig.size.height;
         int vstr = streamConfig.stride;
-        size_t imageSize = buffer->metadata().planes()[planeNumber].bytesused;
-        auto mem = mappedPlanes[buffer];
-        uint8_t *ptr = mem[planeNumber].data();
+        auto mem = mapped1stPlane[buffer];
         cv::Mat frame(vh, vw, CV_8UC3);
+        // Check if the stream is in MJPEG
         if (streamConfig.pixelFormat == libcamera::formats::MJPEG)
         {
             int jpegSubsamp, jpegColorspace;
 
             // Read JPEG header
-            if (tjDecompressHeader3(tjInstance, ptr, imageSize,
+            if (tjDecompressHeader3(tjInstance, mem.data(), mem.size(),
                                     &vw, &vh, &jpegSubsamp, &jpegColorspace) != 0)
             {
-                std::cerr << tjGetErrorStr() << std::endl;
+                std::cerr << "tjDecompressHeader3 error: " << tjGetErrorStr() << std::endl;
             }
 
-            // Decompress to RGB
-            if (tjDecompress2(tjInstance, ptr, imageSize,
+            // Decompress to BGR
+            if (tjDecompress2(tjInstance, mem.data(), mem.size(),
                               frame.data, vw, 0, vh,
                               TJPF_BGR, TJFLAG_FASTDCT) != 0)
             {
-                std::cerr << tjGetErrorStr() << std::endl;
+                std::cerr << "tjDecompress2 error: " << tjGetErrorStr() << std::endl;
             }
         }
         else
         {
+            uint8_t *ptr = mem.data();
             fprintf(stderr, "%dx%d,%d\n", vw, vh, vstr);
             uint ls = vw * 3;
             for (int i = 0; i < vh; i++, ptr += vstr)
@@ -80,12 +83,7 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
         }
     }
 
-    // in case the request has been cancelled in the meantime
-    // this is a hack because libcamera should wait till a request has finisehd but doesn't
-    if (nullptr == request)
-        return;
-    if (request->status() == libcamera::Request::RequestCancelled)
-        return;
+    if (!isRunning) return;
     /* Re-queue the Request to the camera. */
     request->reuse(libcamera::Request::ReuseBuffers);
     camera->queueRequest(request);
@@ -233,7 +231,7 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
         if (ret)
         {
             std::cerr << "CONFIGURATION FAILED!" << std::endl;
-            throw;
+            throw std::runtime_error("Could not config camera.");
         }
     }
 
@@ -266,53 +264,44 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
         if (ret < 0)
         {
             std::cerr << "Failed to allocate capture buffers.";
-            throw;
+            throw std::runtime_error("Failed to allocate capture buffers.");
         }
 
         for (const std::unique_ptr<libcamera::FrameBuffer> &buffer : allocator->buffers(stream))
         {
-            // Maps the file-descriptors to physical memory
-            std::map<int, uint8_t *> mappedBuffers;
-
-            // Iterate through the planes of each famebuffer and find unique
-            // file descriptors and get ther corresponding memory loctions.
+            // We care only about the 1st fd in the 1st plane. However, that very fd might
+            // show up not just in the 1st plane but also other planes. Or in other words
+            // a single mmap might be spread over different planes. So we need to sum up the
+            // different fragments to get the total size of the mmap.
+            const int firstfd = buffer->planes()[0].fd.get();
+            // calc the total size of the mmap buffer
+            size_t buffer_size = 0;
             for (const libcamera::FrameBuffer::Plane &plane : buffer->planes())
             {
-                // get the file descriptor of the plane
-                const int fd = plane.fd.get();
-                // Check if we have already recorded this fd previously
-                if (mappedBuffers.find(fd) == mappedBuffers.end())
+                const int currentfd = plane.fd.get();
+                if (firstfd == currentfd)
                 {
-                    // We found a new fd which hasn't been stored in the map.
-                    // For now just create a dummy entry in the map for this file descriptor
-                    // as the same one might occur a few times in the loop!
-                    mappedBuffers[fd] = nullptr;
+                    buffer_size += plane.length;
                 }
             }
-
-            // Find for each plane now the physical address and store it in
-            // a vector of physical addresses for each plane. At the end
-            // every plane should have just one physical address but looping
-            // it anyway!
-            for (const libcamera::FrameBuffer::Plane &plane : buffer->planes())
+            const size_t mmaplength = lseek(firstfd, 0, SEEK_END);
+            if (buffer_size != mmaplength)
             {
-                const int fd = plane.fd.get();
-                uint8_t *address = mappedBuffers[fd];
-                if (!address)
-                {
-                    address = (uint8_t *)mmap(nullptr, plane.length, PROT_READ,
-                                              MAP_SHARED, fd, 0);
-                    if (((void *)address) == MAP_FAILED)
-                    {
-                        int error = -errno;
-                        std::cerr << "Failed to mmap plane: "
-                                  << strerror(-error) << std::endl;
-                        throw;
-                    }
-                }
-                // Append the new memory location to a vector of memory locations for this plane
-                mappedPlanes[buffer.get()].emplace_back(address + plane.offset, plane.length);
+                fprintf(stderr,
+                        "Fatal: accumulated plane lengths [%lu] != mmap lenghth[%lu]\n", buffer_size, mmaplength);
+                throw std::runtime_error("Fatal: accumulated plane buffer length has not the size of mmap.");
             }
+            uint8_t *address = (uint8_t *)mmap(nullptr, buffer_size, PROT_READ,
+                                               MAP_SHARED, firstfd, 0);
+            if (((void *)address) == MAP_FAILED)
+            {
+                int error = -errno;
+                std::cerr << "Failed to mmap plane: "
+                          << strerror(-error) << std::endl;
+                throw std::runtime_error("Failed to mmap plane.");
+            }
+            // Store the mmapped address as a span
+            mapped1stPlane[buffer.get()] = {address, buffer_size};
         }
     }
 
@@ -380,7 +369,7 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
 
     if (settings.framerate > 0)
     {
-        int64_t frame_time = 1000000 / settings.framerate; // in us
+        frame_time = 1000000 / settings.framerate; // in us
         controls.set(libcamera::controls::FrameDurationLimits, libcamera::Span<const int64_t, 2>({frame_time, frame_time}));
     }
 
@@ -418,6 +407,7 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
      * For each delivered frame, the Slot connected to the
      * Camera::requestCompleted Signal is called.
      */
+    isRunning = true;
     camera->start(&controls);
     for (std::unique_ptr<libcamera::Request> &request : requests)
         camera->queueRequest(request.get());
@@ -432,6 +422,8 @@ void Libcam2OpenCV::stop()
      * Stop the Camera, release resources and stop the CameraManager.
      * libcamera has now released all resources it owned.
      */
+    isRunning = false;
+    usleep(frame_time);
     if (camera)
     {
         camera->stop();
@@ -448,3 +440,7 @@ void Libcam2OpenCV::stop()
         tjInstance = nullptr;
     }
 }
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
