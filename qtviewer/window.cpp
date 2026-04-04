@@ -2,8 +2,7 @@
 
 Window::Window()
 {
-	myCallback.window = this;
-	camera.registerCallback(&myCallback);
+	camera.registerCallback([&](const cv::Mat &mat, const libcamera::ControlList &){updateImage(mat);});
 	image = new QLabel;
 	vLayout = new QVBoxLayout();
 	vLayout->addWidget(image);

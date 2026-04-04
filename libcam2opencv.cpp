@@ -78,9 +78,9 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
                 memcpy(frame.ptr(i), ptr, ls);
             }
         }
-        if (nullptr != callback)
+        if (onFrame)
         {
-            callback->hasFrame(frame, requestMetadata);
+            onFrame(frame, requestMetadata);
         }
     }
 

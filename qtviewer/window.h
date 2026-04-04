@@ -23,17 +23,8 @@ public:
     QVBoxLayout  *vLayout;  // vert layout
     QLabel       *image;
 
-    struct MyCallback : Libcam2OpenCV::Callback {
-	Window* window = nullptr;
-	virtual void hasFrame(const cv::Mat &frame, const libcamera::ControlList &) {
-	    if (nullptr != window) {
-		window->updateImage(frame);
-	    }
-	}
-    };
-
     Libcam2OpenCV camera;
-    MyCallback myCallback;
-};
+    
+ };
 
 #endif // WINDOW_H

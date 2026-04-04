@@ -86,18 +86,14 @@ struct Libcam2OpenCVSettings
 class Libcam2OpenCV
 {
 public:
-    struct Callback
-    {
-        virtual void hasFrame(const cv::Mat &frame, const libcamera::ControlList &metadata) = 0;
-        virtual ~Callback() {}
-    };
+    using OnFrame = std::function<void(const cv::Mat &, const libcamera::ControlList &)>;
 
     /**
      * Register the callback for the frame data
      **/
-    void registerCallback(Callback *cb)
+    void registerCallback(OnFrame cb)
     {
-        callback = cb;
+        onFrame = cb;
     }
 
     /**
@@ -119,7 +115,7 @@ private:
     std::shared_ptr<libcamera::Camera> camera;
 	std::map<libcamera::FrameBuffer *, libcamera::Span<uint8_t>> framebuffer2memory;
     std::unique_ptr<libcamera::CameraConfiguration> config;
-    Callback *callback = nullptr;
+    OnFrame onFrame;
     std::unique_ptr<libcamera::FrameBufferAllocator> allocator;
     libcamera::Stream *stream = nullptr;
     std::unique_ptr<libcamera::CameraManager> cm;
