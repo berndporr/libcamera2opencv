@@ -35,14 +35,16 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
     const libcamera::Request::BufferMap &buffers = request->buffers();
     for (auto bufferPair : buffers)
     {
+        // it's all in the 1st plane and we ignore any other
+        const int planeNumber = 0;
         libcamera::FrameBuffer *buffer = bufferPair.second;
         libcamera::StreamConfiguration &streamConfig = config->at(0);
         int vw = streamConfig.size.width;
         int vh = streamConfig.size.height;
         int vstr = streamConfig.stride;
-        size_t imageSize = buffer->metadata().planes()[0].bytesused;
+        size_t imageSize = buffer->metadata().planes()[planeNumber].bytesused;
         auto mem = mappedPlanes[buffer];
-        uint8_t *ptr = mem[0].data();
+        uint8_t *ptr = mem[planeNumber].data();
         cv::Mat frame(vh, vw, CV_8UC3);
         if (streamConfig.pixelFormat == libcamera::formats::MJPEG)
         {
@@ -67,7 +69,7 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
         {
             fprintf(stderr, "%dx%d,%d\n", vw, vh, vstr);
             uint ls = vw * 3;
-            for (unsigned int i = 0; i < vh; i++, ptr += vstr)
+            for (int i = 0; i < vh; i++, ptr += vstr)
             {
                 memcpy(frame.ptr(i), ptr, ls);
             }
@@ -263,64 +265,53 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
         int ret = allocator->allocate(stream);
         if (ret < 0)
         {
-            std::cerr << "Failed to allocate capture buffers";
+            std::cerr << "Failed to allocate capture buffers.";
             throw;
         }
 
         for (const std::unique_ptr<libcamera::FrameBuffer> &buffer : allocator->buffers(stream))
         {
-            struct MappedBufferInfo
-            {
-                uint8_t *address = nullptr;
-                size_t mapLength = 0;
-                size_t dmabufLength = 0;
-            };
-            std::map<int, MappedBufferInfo> mappedBuffers;
+            // Maps the file-descriptors to physical memory
+            std::map<int, uint8_t *> mappedBuffers;
 
+            // Iterate through the planes of each famebuffer and find unique
+            // file descriptors and get ther corresponding memory loctions.
             for (const libcamera::FrameBuffer::Plane &plane : buffer->planes())
             {
+                // get the file descriptor of the plane
                 const int fd = plane.fd.get();
+                // Check if we have already recorded this fd previously
                 if (mappedBuffers.find(fd) == mappedBuffers.end())
                 {
-                    const size_t length = lseek(fd, 0, SEEK_END);
-                    mappedBuffers[fd] = MappedBufferInfo{nullptr, 0, length};
+                    // We found a new fd which hasn't been stored in the map.
+                    // For now just create a dummy entry in the map for this file descriptor
+                    // as the same one might occur a few times in the loop!
+                    mappedBuffers[fd] = nullptr;
                 }
-
-                const size_t length = mappedBuffers[fd].dmabufLength;
-
-                if (plane.offset > length ||
-                    plane.offset + plane.length > length)
-                {
-                    std::cerr << "plane is out of buffer: buffer length="
-                              << length << ", plane offset=" << plane.offset
-                              << ", plane length=" << plane.length
-                              << std::endl;
-                    throw;
-                }
-                size_t &mapLength = mappedBuffers[fd].mapLength;
-                mapLength = std::max(mapLength,
-                                     static_cast<size_t>(plane.offset + plane.length));
             }
 
+            // Find for each plane now the physical address and store it in
+            // a vector of physical addresses for each plane. At the end
+            // every plane should have just one physical address but looping
+            // it anyway!
             for (const libcamera::FrameBuffer::Plane &plane : buffer->planes())
             {
                 const int fd = plane.fd.get();
-                auto &info = mappedBuffers[fd];
-                if (!info.address)
+                uint8_t *address = mappedBuffers[fd];
+                if (!address)
                 {
-                    void *address = mmap(nullptr, info.mapLength, PROT_READ,
-                                         MAP_SHARED, fd, 0);
-                    if (address == MAP_FAILED)
+                    address = (uint8_t *)mmap(nullptr, plane.length, PROT_READ,
+                                              MAP_SHARED, fd, 0);
+                    if (((void *)address) == MAP_FAILED)
                     {
                         int error = -errno;
                         std::cerr << "Failed to mmap plane: "
                                   << strerror(-error) << std::endl;
                         throw;
                     }
-
-                    info.address = static_cast<uint8_t *>(address);
                 }
-                mappedPlanes[buffer.get()].emplace_back(info.address + plane.offset, plane.length);
+                // Append the new memory location to a vector of memory locations for this plane
+                mappedPlanes[buffer.get()].emplace_back(address + plane.offset, plane.length);
             }
         }
     }
@@ -449,7 +440,11 @@ void Libcam2OpenCV::stop()
         camera->release();
         camera.reset();
         delete allocator;
-        tjDestroy(tjInstance);
     }
     cm->stop();
+    if (tjInstance)
+    {
+        tjDestroy(tjInstance);
+        tjInstance = nullptr;
+    }
 }
