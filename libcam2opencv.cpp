@@ -45,9 +45,9 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
         int vw = streamConfig.size.width;
         int vh = streamConfig.size.height;
         int vstr = streamConfig.stride;
-        auto mem = mapped1stPlane[buffer];
+        auto mem = framebuffer2memory[buffer];
         cv::Mat frame(vh, vw, CV_8UC3);
-        // Check if the stream is in MJPEG
+        // Check if the stream is in MJPEG and needs decoding
         if (streamConfig.pixelFormat == libcamera::formats::MJPEG)
         {
             int jpegSubsamp, jpegColorspace;
@@ -69,6 +69,7 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
         }
         else
         {
+            // assuming we have got uncompressed BGR here
             uint8_t *ptr = mem.data();
             fprintf(stderr, "%dx%d,%d\n", vw, vh, vstr);
             uint ls = vw * 3;
@@ -83,7 +84,8 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
         }
     }
 
-    if (!isRunning) return;
+    if (!isRunning)
+        return;
     /* Re-queue the Request to the camera. */
     request->reuse(libcamera::Request::ReuseBuffers);
     camera->queueRequest(request);
@@ -255,7 +257,7 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
     camera->configure(config.get());
 
     /* Allocate and map buffers. */
-    allocator = new libcamera::FrameBufferAllocator(camera);
+    allocator = std::make_unique<libcamera::FrameBufferAllocator>(camera);
     for (libcamera::StreamConfiguration &config : *config)
     {
         libcamera::Stream *stream = config.stream();
@@ -267,31 +269,34 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
             throw std::runtime_error("Failed to allocate capture buffers.");
         }
 
+        // Every framebuffer has a physical memory location which is linked to an mmap
+        // file descriptor.
         for (const std::unique_ptr<libcamera::FrameBuffer> &buffer : allocator->buffers(stream))
         {
             // We care only about the 1st fd in the 1st plane. However, that very fd might
-            // show up not just in the 1st plane but also other planes. Or in other words
-            // a single mmap might be spread over different planes. So we need to sum up the
-            // different fragments to get the total size of the mmap.
+            // show up not just in the 1st plane but also in other planes. Or in other words:
+            // a single mmap might be spread over different planes. We need to sum up the
+            // different memory fragments in the planes to get the total size of the mmap.
             const int firstfd = buffer->planes()[0].fd.get();
             // calc the total size of the mmap buffer
-            size_t buffer_size = 0;
+            size_t total_buffer_size = 0;
             for (const libcamera::FrameBuffer::Plane &plane : buffer->planes())
             {
                 const int currentfd = plane.fd.get();
                 if (firstfd == currentfd)
                 {
-                    buffer_size += plane.length;
+                    total_buffer_size += plane.length;
                 }
             }
             const size_t mmaplength = lseek(firstfd, 0, SEEK_END);
-            if (buffer_size != mmaplength)
+            if (total_buffer_size != mmaplength)
             {
                 fprintf(stderr,
-                        "Fatal: accumulated plane lengths [%lu] != mmap lenghth[%lu]\n", buffer_size, mmaplength);
+                        "Fatal: accumulated plane lengths [%lu] != mmap lenghth[%lu]\n", 
+                        total_buffer_size, mmaplength);
                 throw std::runtime_error("Fatal: accumulated plane buffer length has not the size of mmap.");
             }
-            uint8_t *address = (uint8_t *)mmap(nullptr, buffer_size, PROT_READ,
+            uint8_t *address = (uint8_t *)mmap(nullptr, total_buffer_size, PROT_READ,
                                                MAP_SHARED, firstfd, 0);
             if (((void *)address) == MAP_FAILED)
             {
@@ -300,8 +305,8 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
                           << strerror(-error) << std::endl;
                 throw std::runtime_error("Failed to mmap plane.");
             }
-            // Store the mmapped address as a span
-            mapped1stPlane[buffer.get()] = {address, buffer_size};
+            // Store the mmapped address range as a span
+            framebuffer2memory[buffer.get()] = {address, total_buffer_size};
         }
     }
 
@@ -429,9 +434,9 @@ void Libcam2OpenCV::stop()
         camera->stop();
         if (allocator)
             allocator->free(stream);
+        allocator.reset();
         camera->release();
         camera.reset();
-        delete allocator;
     }
     cm->stop();
     if (tjInstance)

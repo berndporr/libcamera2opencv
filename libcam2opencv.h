@@ -117,10 +117,10 @@ public:
 
 private:
     std::shared_ptr<libcamera::Camera> camera;
-	std::map<libcamera::FrameBuffer *, libcamera::Span<uint8_t>> mapped1stPlane;
+	std::map<libcamera::FrameBuffer *, libcamera::Span<uint8_t>> framebuffer2memory;
     std::unique_ptr<libcamera::CameraConfiguration> config;
     Callback *callback = nullptr;
-    libcamera::FrameBufferAllocator* allocator;
+    std::unique_ptr<libcamera::FrameBufferAllocator> allocator;
     libcamera::Stream *stream = nullptr;
     std::unique_ptr<libcamera::CameraManager> cm;
     std::vector<std::unique_ptr<libcamera::Request>> requests;
