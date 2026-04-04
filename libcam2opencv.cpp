@@ -259,12 +259,12 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
     camera->configure(config.get());
 
     /*
-     * Allocate memory for every frame buffer. Every stream can have multiple
+     * Allocate memory for every framebuffer. Every stream can have multiple
      * frame buffers, for example for double buffering. How many are needed
      * is decided by libcamera. We let libcamera allocate as many as it needs.
      * What complicates things is that framebuffers are distingished by their
      * mmap file descriptors. We need to do the mapping from the file descriptors
-     * to the physical addresses.
+     * to the physical addresses ourselves.
      */
     allocator = std::make_unique<libcamera::FrameBufferAllocator>(camera);
     for (libcamera::StreamConfiguration &config : *config)
@@ -279,16 +279,19 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
 
         // Every framebuffer has a physical memory location which is described by
         // an mmap file descriptor. We need to find here the actual physical address
-        // range and store this. While there is only one file descriptor the actual
-        // physical address space might be split over a number of planes.
+        // range and store this as a std::span. While there is only one file descriptor the actual
+        // physical address space might be split over a number of planes so we need to
+        // piece them together.
         for (const std::unique_ptr<libcamera::FrameBuffer> &buffer : allocator->buffers(stream))
         {
-            // We assume that we have only relevant file descriptor and we take the one
+            // We assume that we have only one relevant file descriptor and we take the one
             // in the 1st plane. However, that very fd might show up not just in the 1st 
-            // plane but also in other planes. Or in other words:
+            // plane but also in other planes, for example if they are R,G and B planes. 
+            // Or in other words:
             // A single mmap might be spread over different planes. We need to sum up the
             // different memory fragments in the planes to get the total size of the mmap.
             const int firstfd = buffer->planes()[0].fd.get();
+            const int firstoffset = buffer->planes()[0].offset;
             // calc the total size of the mmap buffer spanning various planes
             size_t total_buffer_size = 0;
             for (const libcamera::FrameBuffer::Plane &plane : buffer->planes())
@@ -296,7 +299,7 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
                 const int currentfd = plane.fd.get();
                 if (firstfd == currentfd)
                 {
-                    total_buffer_size += plane.length;
+                    total_buffer_size += ( plane.length + plane.offset );
                 }
             }
             // We could have omitted the loop above and just taken the total
@@ -317,7 +320,7 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
                 throw std::runtime_error("Failed to mmap plane.");
             }
             // Store the mmapped address range as a span
-            framebuffer2memory[buffer.get()] = {address, total_buffer_size};
+            framebuffer2memory[buffer.get()] = {address + firstoffset, total_buffer_size};
         }
     }
 
