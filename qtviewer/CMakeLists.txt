@@ -10,13 +10,12 @@ project(CamViewer
 
 set (CMAKE_CXX_STANDARD 17)
 
-set (CMAKE_CXX_FLAGS "-Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wno-unused-parameter -L..")
+set (CMAKE_CXX_FLAGS "-Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wno-unused-parameter")
 
 find_package(PkgConfig)
-
 find_package(OpenCV REQUIRED)
-
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
+pkg_check_modules(TURBOJPEG REQUIRED libturbojpeg)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -40,6 +39,7 @@ add_executable(qtviewer
   main.cpp
 )
 
+target_link_directories(qtviewer PUBLIC ..)
 target_link_libraries(qtviewer PkgConfig::LIBCAMERA)
 target_link_libraries(qtviewer Qt6::Widgets)
 target_link_libraries(qtviewer ${OpenCV_LIBS})
