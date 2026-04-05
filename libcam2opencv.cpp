@@ -42,43 +42,8 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
     for (auto bufferPair : buffers)
     {
         libcamera::FrameBuffer *buffer = bufferPair.second;
-        libcamera::StreamConfiguration &streamConfig = config->at(0);
-        int vw = streamConfig.size.width;
-        int vh = streamConfig.size.height;
-        int vstr = streamConfig.stride;
         auto mem = framebuffer2memory[buffer];
-        cv::Mat frame(vh, vw, CV_8UC3);
-        // Check if the stream is in MJPEG and needs decoding
-        if (streamConfig.pixelFormat == libcamera::formats::MJPEG)
-        {
-            int jpegSubsamp, jpegColorspace;
-
-            // Read JPEG header
-            if (tjDecompressHeader3(tjInstance, mem.data(), mem.size(),
-                                    &vw, &vh, &jpegSubsamp, &jpegColorspace) != 0)
-            {
-                std::cerr << "tjDecompressHeader3 error: " << tjGetErrorStr() << std::endl;
-            }
-
-            // Decompress to BGR
-            if (tjDecompress2(tjInstance, mem.data(), mem.size(),
-                              frame.data, vw, 0, vh,
-                              TJPF_BGR, TJFLAG_FASTDCT) != 0)
-            {
-                std::cerr << "tjDecompress2 error: " << tjGetErrorStr() << std::endl;
-            }
-        }
-        else
-        {
-            // assuming we have got uncompressed BGR here
-            uint8_t *ptr = mem.data();
-            fprintf(stderr, "%dx%d,%d\n", vw, vh, vstr);
-            uint ls = vw * 3;
-            for (int i = 0; i < vh; i++, ptr += vstr)
-            {
-                memcpy(frame.ptr(i), ptr, ls);
-            }
-        }
+        formatConverter.convert(mem, frame);
         if (onFrame)
         {
             onFrame(frame, requestMetadata);
@@ -92,14 +57,6 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
 
 void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
 {
-    /**
-     * Create a turbo jpeg decompressor. That's needed for webcams which transmit
-     * MJPEG.
-     */
-    tjInstance = tjInitDecompress();
-    if (!tjInstance)
-        throw std::runtime_error("Failed to initialize TurboJPEG decompressor.");
-
     /*
      * --------------------------------------------------------------------
      * Create a Camera Manager.
@@ -239,8 +196,8 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
         }
     }
 
-    // opencv compatible format
-    streamConfig.pixelFormat = libcamera::formats::RGB888;
+    // Native format for the format converter won't need any conversion.
+    streamConfig.pixelFormat = FormatConverter::nativeInputFormat;
 
     /*
      * Validating a CameraConfiguration -before- applying it will adjust it
@@ -277,50 +234,23 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
             throw std::runtime_error("Failed to allocate capture buffers.");
         }
 
-        // Every framebuffer has a physical memory location which is described by
-        // an mmap file descriptor. We need to find here the actual physical address
-        // range and store this as a std::span. While there is only one file descriptor the actual
-        // physical address space might be split over a number of planes so we need to
-        // piece them together.
-        for (const std::unique_ptr<libcamera::FrameBuffer> &buffer : allocator->buffers(stream))
+        for (const std::unique_ptr<libcamera::FrameBuffer> &buffer : allocator->buffers(config.stream()))
         {
-            // We assume that we have only one relevant file descriptor and we take the one
-            // in the 1st plane. However, that very fd might show up not just in the 1st 
-            // plane but also in other planes, for example if they are R,G and B planes. 
-            // Or in other words:
-            // A single mmap might be spread over different planes. We need to sum up the
-            // different memory fragments in the planes to get the total size of the mmap.
-            const int firstfd = buffer->planes()[0].fd.get();
-            const int firstoffset = buffer->planes()[0].offset;
-            // calc the total size of the mmap buffer spanning various planes
-            size_t total_buffer_size = 0;
-            for (const libcamera::FrameBuffer::Plane &plane : buffer->planes())
+            // "Single plane" buffers appear as multi-plane here, but we can spot them because then
+            // planes all share the same fd. We accumulate them so as to mmap the buffer only once.
+            size_t buffer_size = 0;
+            for (unsigned i = 0; i < buffer->planes().size(); i++)
             {
-                const int currentfd = plane.fd.get();
-                if (firstfd == currentfd)
+                const libcamera::FrameBuffer::Plane &plane = buffer->planes()[i];
+                buffer_size += plane.length;
+                if (i == buffer->planes().size() - 1 || plane.fd.get() != buffer->planes()[i + 1].fd.get())
                 {
-                    total_buffer_size += ( plane.length + plane.offset );
+                    void *memory = mmap(NULL, buffer_size, PROT_READ | PROT_WRITE, MAP_SHARED, plane.fd.get(), 0);
+                    framebuffer2memory[buffer.get()].push_back(libcamera::Span<uint8_t>(static_cast<uint8_t *>(memory),
+                                                                                    buffer_size));
+                    buffer_size = 0;
                 }
             }
-            // We could have omitted the loop above and just taken the total
-            // size of the mmap region using the fd:
-            const size_t mmaplength = lseek(firstfd, 0, SEEK_END);
-            // But now we can compare if the accumulated planes have the same size as the mmap fd.
-            if (total_buffer_size != mmaplength)
-            {
-                fprintf(stderr,
-                        "Fatal/BUG?: accumulated plane lengths [%lu] != mmap lenghth[%lu]\n",
-                        total_buffer_size, mmaplength);
-                throw std::runtime_error("Fatal: accumulated plane buffer length has not the size of mmap.");
-            }
-            uint8_t *address = (uint8_t *)mmap(nullptr, total_buffer_size, PROT_READ,
-                                               MAP_SHARED, firstfd, 0);
-            if (((void *)address) == MAP_FAILED)
-            {
-                throw std::runtime_error("Failed to mmap plane.");
-            }
-            // Store the mmapped address range as a span
-            framebuffer2memory[buffer.get()] = {address + firstoffset, total_buffer_size};
         }
     }
 
@@ -416,6 +346,12 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
     controls.set(libcamera::controls::Brightness, settings.brightness);
     controls.set(libcamera::controls::Contrast, settings.contrast);
 
+    int vw = streamConfig.size.width;
+    int vh = streamConfig.size.height;
+    int vstr = streamConfig.stride;
+    frame.create(vh,vw,FormatConverter::openCVoutputFormat);
+    formatConverter.start(streamConfig.pixelFormat, vw, vh, vstr);
+
     /*
      * --------------------------------------------------------------------
      * Start Capture
@@ -461,11 +397,7 @@ void Libcam2OpenCV::stop()
     if (cm)
         cm->stop();
     cm.reset();
-    if (tjInstance)
-    {
-        tjDestroy(tjInstance);
-        tjInstance = nullptr;
-    }
+    formatConverter.stop();
 }
 
 #if defined(__GNUC__)

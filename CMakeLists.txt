@@ -31,7 +31,7 @@ include(GNUInstallDirs)
 
 add_subdirectory(metadataprinter)
 
-add_library(cam2opencv STATIC libcam2opencv.cpp)
+add_library(cam2opencv STATIC libcam2opencv.cpp format_converter.cpp)
 
 target_link_libraries(cam2opencv PkgConfig::LIBCAMERA ${OpenCV_LIBS} turbojpeg)
 

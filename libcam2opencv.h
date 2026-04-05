@@ -17,7 +17,7 @@
 #include <atomic>
 #include <sys/mman.h>
 #include <opencv2/opencv.hpp>
-#include <turbojpeg.h>
+#include "format_converter.h"
 
 // need to undefine QT defines here as libcamera uses the same expressions (!).
 #undef signals
@@ -113,7 +113,7 @@ public:
 
 private:
     std::shared_ptr<libcamera::Camera> camera;
-	std::map<libcamera::FrameBuffer *, libcamera::Span<uint8_t>> framebuffer2memory;
+	std::map<libcamera::FrameBuffer *, std::vector<libcamera::Span<uint8_t>>> framebuffer2memory;
     std::unique_ptr<libcamera::CameraConfiguration> config;
     OnFrame onFrame;
     std::unique_ptr<libcamera::FrameBufferAllocator> allocator;
@@ -121,8 +121,9 @@ private:
     std::unique_ptr<libcamera::CameraManager> cm;
     std::vector<std::unique_ptr<libcamera::Request>> requests;
     libcamera::ControlList controls;
-    tjhandle tjInstance;
+    FormatConverter formatConverter;
     std::mutex shutdown_mutex;
+    cv::Mat frame;
 
     /*
      * --------------------------------------------------------------------
