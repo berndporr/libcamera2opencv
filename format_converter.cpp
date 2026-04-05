@@ -43,10 +43,6 @@ void FormatConverter::start(const libcamera::PixelFormat format, int width, int 
 	height_ = height;
 	stride_ = stride;
 
-	tjInstance = tjInitDecompress();
-	if (!tjInstance)
-		throw std::runtime_error("Failed to initialize TurboJPEG decompressor.");
-
 	if (nativeInputFormat == format)
 	{
 		formatFamily_ = NATIVE;
@@ -177,6 +173,9 @@ void FormatConverter::start(const libcamera::PixelFormat format, int width, int 
 		break;
 	case libcamera::formats::MJPEG:
 		formatFamily_ = MJPEG;
+		tjInstance = tjInitDecompress();
+		if (!tjInstance)
+			throw std::runtime_error("Failed to initialize TurboJPEG decompressor.");
 		break;
 	default:
 		throw std::runtime_error("Invalid libcamera image format.");
@@ -191,25 +190,21 @@ cv::Mat FormatConverter::convert(const std::vector<libcamera::Span<uint8_t>> &sr
 	case NATIVE:
 		return cv::Mat(height_, width_, FormatConverter::openCVoutputFormat, srcmem[0].data());
 	case MJPEG:
-		convertJPG(srcmem);
-		break;
+		return convertJPG(srcmem);
 	case RGB:
-		convertRGB(srcmem);
-		break;
+		return convertRGB(srcmem);
 	case YUVPacked:
-		convertYUVPacked(srcmem);
-		break;
+		return convertYUVPacked(srcmem);
 	case YUVSemiPlanar:
-		convertYUVSemiPlanar(srcmem);
-		break;
+		return convertYUVSemiPlanar(srcmem);
 	case YUVPlanar:
-		convertYUVPlanar(srcmem);
-		break;
+		return convertYUVPlanar(srcmem);
 	};
-	return dst;
+	throw std::runtime_error("BUG: Invalid format family.");
+	return cv::Mat();
 }
 
-static void yuv_to_rgb(int y, int u, int v, int *r, int *g, int *b)
+void FormatConverter::yuv_to_rgb(const int y, const int u, const int v, int *r, int *g, int *b) const
 {
 	int c = y - 16;
 	int d = u - 128;
@@ -219,7 +214,7 @@ static void yuv_to_rgb(int y, int u, int v, int *r, int *g, int *b)
 	*b = CLIP((298 * c + 516 * d + 128) >> RGBSHIFT);
 }
 
-void FormatConverter::convertJPG(const std::vector<libcamera::Span<uint8_t>> &srcmem)
+cv::Mat FormatConverter::convertJPG(const std::vector<libcamera::Span<uint8_t>> &srcmem)
 {
 	int jpegSubsamp, jpegColorspace;
 	int w = width_;
@@ -247,11 +242,13 @@ void FormatConverter::convertJPG(const std::vector<libcamera::Span<uint8_t>> &sr
 		fprintf(stderr, "Wrong image size. Can't decompress. Have= %d x %d, Want= %d x %d.\n",
 				width_, height_, w, h);
 	}
+	return dst;
 }
 
-void FormatConverter::convertRGB(const std::vector<libcamera::Span<uint8_t>> &srcmem)
+cv::Mat FormatConverter::convertRGB(const std::vector<libcamera::Span<uint8_t>> &srcmem)
 {
 	const unsigned char *src = srcmem[0].data();
+	unsigned char *dstptr = dst.data;
 	unsigned int x, y;
 	int r, g, b;
 
@@ -263,17 +260,18 @@ void FormatConverter::convertRGB(const std::vector<libcamera::Span<uint8_t>> &sr
 			g = src[bpp_ * x + g_pos_];
 			b = src[bpp_ * x + b_pos_];
 
-			dst.data[4 * x + 0] = b;
-			dst.data[4 * x + 1] = g;
-			dst.data[4 * x + 2] = r;
+			dstptr[3 * x + 0] = b;
+			dstptr[3 * x + 1] = g;
+			dstptr[3 * x + 2] = r;
 		}
 
 		src += stride_;
-		dst += width_ * 3;
+		dstptr += width_ * 3;
 	}
+	return dst;
 }
 
-void FormatConverter::convertYUVPacked(const std::vector<libcamera::Span<uint8_t>> &srcmem)
+cv::Mat FormatConverter::convertYUVPacked(const std::vector<libcamera::Span<uint8_t>> &srcmem)
 {
 	const unsigned char *src = srcmem[0].data();
 	unsigned int src_x, src_y, dst_x, dst_y;
@@ -310,9 +308,10 @@ void FormatConverter::convertYUVPacked(const std::vector<libcamera::Span<uint8_t
 			src_x++;
 		}
 	}
+	return dst;
 }
 
-void FormatConverter::convertYUVPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem)
+cv::Mat FormatConverter::convertYUVPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem)
 {
 	unsigned int c_stride = stride_ / horzSubSample_;
 	unsigned int c_inc = horzSubSample_ == 1 ? 1 : 0;
@@ -354,9 +353,10 @@ void FormatConverter::convertYUVPlanar(const std::vector<libcamera::Span<uint8_t
 			dstptr += 3;
 		}
 	}
+	return dst;
 }
 
-void FormatConverter::convertYUVSemiPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem)
+cv::Mat FormatConverter::convertYUVSemiPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem)
 {
 	unsigned int c_stride = stride_ * (2 / horzSubSample_);
 	unsigned int c_inc = horzSubSample_ == 1 ? 2 : 0;
@@ -394,4 +394,5 @@ void FormatConverter::convertYUVSemiPlanar(const std::vector<libcamera::Span<uin
 			dstptr += 3;
 		}
 	}
+	return dst;
 }
