@@ -1,16 +1,19 @@
-# Raspberry PI libcamera to openCV library with callback
+# libcamera to openCV library
 
-This is a wrapper around libcamera which makes it super easy to establish
-a callback containing an openCV matrix.
+This is a wrapper around libcamera which hides all its complexity and
+makes it as easy as possible to establish a callback delivering openCV
+frames.
 
-The raw callback interface of libcamera leaves it to the user to do
-complex memory mapping with a lot of implicit conventions 
-to access the raw image data. It also leaves it to the user to convert
-it to standard RGB. For example, the MJPEG stream from a USB camera
-is not decoded but leaves it to the user.
-This library is an attempt to abstract all this
-complexity away and just provide the user with an BGR openCV matrix
-no matter what raw format the camera has.
+The motivation behind this wrapper is that the raw callback interface
+of libcamera forces the user to understand complex memory mapping and 
+conventions buried deep in its source code to achieve the
+conversion to RGB. This library is an attempt to abstract all
+this complexity away and provide a friendly callback which directly
+delivers openCV images.
+
+Works with:
+ - Raspberry PI CSI cameras
+ - Webcams delivering MJPEG
 
 ## Prerequisites
 
