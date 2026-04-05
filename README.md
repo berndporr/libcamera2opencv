@@ -36,15 +36,13 @@ sudo make install
  2. Create a class containing this callback:
 ```
     struct MyCallback {
-        virtual void onFrame(const cv::Mat &frame, const libcamera:ControlList &) {
-            if (nullptr != window) {
+        virtual void onFrame(const cv::Mat &frame) {
                 window->updateImage(frame);
-            }
         }
     };
 ```
 
- 3. Create instances of the the camera and the callback:
+ 3. Create instances of the camera and the callback:
 
 ```
 Libcam2OpenCV camera;
@@ -54,8 +52,7 @@ MyCallback myCallback;
  4. Register the callback
 
 ```
-   camera.registerCallback([&](const cv::Mat &mat, const libcamera::ControlList &meta){ myCallback.onFrame(mat, meta); });
-
+   camera.registerCallback([&](const cv::Mat &mat, const libcamera::ControlList &meta){ myCallback.onFrame(mat); });
 ```
 
  5. Start the camera delivering frames via the callback
@@ -81,8 +78,7 @@ check the framerate.
 
 ### QT Image Viewer
 
-The subdirectory `qtviewer` contains a simple QT application
-which displays the camera on screen.
+The subdirectory `qtviewer` contains a simple QT application which displays the camera on screen.
 
 ![alt tag](qtviewer_screenshot.png)
 
