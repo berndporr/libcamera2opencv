@@ -36,17 +36,25 @@ void FormatConverter::stop()
 	}
 }
 
-void FormatConverter::start(const libcamera::PixelFormat &format, int width, int height, int stride)
+void FormatConverter::start(const libcamera::PixelFormat format, int width, int height, int stride)
 {
+	format_ = format;
+	width_ = width;
+	height_ = height;
+	stride_ = stride;
+
 	tjInstance = tjInitDecompress();
 	if (!tjInstance)
 		throw std::runtime_error("Failed to initialize TurboJPEG decompressor.");
 
+	if (nativeInputFormat == format)
+	{
+		formatFamily_ = NATIVE;
+		return;
+	}
+
 	switch (format)
 	{
-	case nativeInputFormat:
-		formatFamily_ = NATIVE;
-		break;
 	case libcamera::formats::NV12:
 		formatFamily_ = YUVSemiPlanar;
 		horzSubSample_ = 2;
@@ -173,37 +181,32 @@ void FormatConverter::start(const libcamera::PixelFormat &format, int width, int
 	default:
 		throw std::runtime_error("Invalid libcamera image format.");
 	};
-
-	format_ = format;
-	width_ = width;
-	height_ = height;
-	stride_ = stride;
+	dst.create(height, width, FormatConverter::openCVoutputFormat);
 }
 
-void FormatConverter::convert(const std::vector<libcamera::Span<uint8_t>> &srcmem, cv::Mat &dst)
+cv::Mat FormatConverter::convert(const std::vector<libcamera::Span<uint8_t>> &srcmem)
 {
 	switch (formatFamily_)
 	{
 	case NATIVE:
-		// We assume that the openCV matrix is contious.
-		memcpy(dst.data, srcmem[0].data(), srcmem[0].size());
-		break;
+		return cv::Mat(height_, width_, FormatConverter::openCVoutputFormat, srcmem[0].data());
 	case MJPEG:
-		convertJPG(srcmem, dst);
+		convertJPG(srcmem);
 		break;
 	case RGB:
-		convertRGB(srcmem, dst);
+		convertRGB(srcmem);
 		break;
 	case YUVPacked:
-		convertYUVPacked(srcmem, dst);
+		convertYUVPacked(srcmem);
 		break;
 	case YUVSemiPlanar:
-		convertYUVSemiPlanar(srcmem, dst);
+		convertYUVSemiPlanar(srcmem);
 		break;
 	case YUVPlanar:
-		convertYUVPlanar(srcmem, dst);
+		convertYUVPlanar(srcmem);
 		break;
 	};
+	return dst;
 }
 
 static void yuv_to_rgb(int y, int u, int v, int *r, int *g, int *b)
@@ -216,7 +219,7 @@ static void yuv_to_rgb(int y, int u, int v, int *r, int *g, int *b)
 	*b = CLIP((298 * c + 516 * d + 128) >> RGBSHIFT);
 }
 
-void FormatConverter::convertJPG(const std::vector<libcamera::Span<uint8_t>> &srcmem, cv::Mat &dst)
+void FormatConverter::convertJPG(const std::vector<libcamera::Span<uint8_t>> &srcmem)
 {
 	int jpegSubsamp, jpegColorspace;
 	int w = width_;
@@ -246,7 +249,7 @@ void FormatConverter::convertJPG(const std::vector<libcamera::Span<uint8_t>> &sr
 	}
 }
 
-void FormatConverter::convertRGB(const std::vector<libcamera::Span<uint8_t>> &srcmem, cv::Mat &dst)
+void FormatConverter::convertRGB(const std::vector<libcamera::Span<uint8_t>> &srcmem)
 {
 	const unsigned char *src = srcmem[0].data();
 	unsigned int x, y;
@@ -270,7 +273,7 @@ void FormatConverter::convertRGB(const std::vector<libcamera::Span<uint8_t>> &sr
 	}
 }
 
-void FormatConverter::convertYUVPacked(const std::vector<libcamera::Span<uint8_t>> &srcmem, cv::Mat &dst)
+void FormatConverter::convertYUVPacked(const std::vector<libcamera::Span<uint8_t>> &srcmem)
 {
 	const unsigned char *src = srcmem[0].data();
 	unsigned int src_x, src_y, dst_x, dst_y;
@@ -309,7 +312,7 @@ void FormatConverter::convertYUVPacked(const std::vector<libcamera::Span<uint8_t
 	}
 }
 
-void FormatConverter::convertYUVPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem, cv::Mat &dst)
+void FormatConverter::convertYUVPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem)
 {
 	unsigned int c_stride = stride_ / horzSubSample_;
 	unsigned int c_inc = horzSubSample_ == 1 ? 1 : 0;
@@ -353,7 +356,7 @@ void FormatConverter::convertYUVPlanar(const std::vector<libcamera::Span<uint8_t
 	}
 }
 
-void FormatConverter::convertYUVSemiPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem, cv::Mat &dst)
+void FormatConverter::convertYUVSemiPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem)
 {
 	unsigned int c_stride = stride_ * (2 / horzSubSample_);
 	unsigned int c_inc = horzSubSample_ == 1 ? 2 : 0;

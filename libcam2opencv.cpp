@@ -43,7 +43,7 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
     {
         libcamera::FrameBuffer *buffer = bufferPair.second;
         auto mem = framebuffer2memory[buffer];
-        formatConverter.convert(mem, frame);
+        auto frame = formatConverter.convert(mem);
         if (onFrame)
         {
             onFrame(frame, requestMetadata);
@@ -349,7 +349,6 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
     int vw = streamConfig.size.width;
     int vh = streamConfig.size.height;
     int vstr = streamConfig.stride;
-    frame.create(vh,vw,FormatConverter::openCVoutputFormat);
     formatConverter.start(streamConfig.pixelFormat, vw, vh, vstr);
 
     /*

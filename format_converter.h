@@ -31,8 +31,8 @@ class FormatConverter
 {
 public:
 	void stop();
-	void start(const libcamera::PixelFormat &format, int width, int height, int stride);
-	void convert(const std::vector<libcamera::Span<uint8_t>> &srcmem, cv::Mat &dst);
+	void start(const libcamera::PixelFormat format, int width, int height, int stride);
+	cv::Mat convert(const std::vector<libcamera::Span<uint8_t>> &srcmem);
 	static constexpr libcamera::PixelFormat nativeInputFormat = libcamera::formats::RGB888;
 	static constexpr int openCVoutputFormat = CV_8UC3;
 
@@ -46,11 +46,11 @@ private:
 		YUVSemiPlanar,
 	};
 
-	void convertJPG(const std::vector<libcamera::Span<uint8_t>> &srcmem, cv::Mat &dst);
-	void convertRGB(const std::vector<libcamera::Span<uint8_t>> &srcmem, cv::Mat &dst);
-	void convertYUVPacked(const std::vector<libcamera::Span<uint8_t>> &srcmem, cv::Mat &dst);
-	void convertYUVPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem, cv::Mat &dst);
-	void convertYUVSemiPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem, cv::Mat &dst);
+	void convertJPG(const std::vector<libcamera::Span<uint8_t>> &srcmem);
+	void convertRGB(const std::vector<libcamera::Span<uint8_t>> &srcmem);
+	void convertYUVPacked(const std::vector<libcamera::Span<uint8_t>> &srcmem);
+	void convertYUVPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem);
+	void convertYUVSemiPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem);
 
 	libcamera::PixelFormat format_;
 	unsigned int width_;
@@ -76,4 +76,7 @@ private:
 
 	/* JPEG decompressor */
 	tjhandle tjInstance = nullptr;
+
+	/* The destination matrix */
+	cv::Mat dst;
 };

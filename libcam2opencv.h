@@ -123,7 +123,6 @@ private:
     libcamera::ControlList controls;
     FormatConverter formatConverter;
     std::mutex shutdown_mutex;
-    cv::Mat frame;
 
     /*
      * --------------------------------------------------------------------
