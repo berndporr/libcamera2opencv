@@ -1,15 +1,14 @@
 # libcamera to openCV library
 
 This is a wrapper around libcamera which hides all its complexity and
-makes it as easy as possible to establish a callback delivering openCV
+makes it as easy as possible to get a humble callback delivering openCV
 frames.
 
 The motivation behind this wrapper is that the raw callback interface
 of libcamera forces the user to understand complex memory mapping and 
-conventions buried deep in its source code to achieve the
-conversion to RGB. This library is an attempt to abstract all
-this complexity away and provide a friendly callback which directly
-delivers openCV images.
+conventions buried deep in its source code to get RGB frames. 
+This library is an attempt to abstract all
+this complexity away and provide a friendly callback delivering openCV images.
 
 Works with:
  - Raspberry PI CSI cameras
@@ -33,26 +32,27 @@ sudo make install
 
  1. Include `libcam2opencv.h` and add `target_link_libraries(yourproj cam2opencv)` to your `CMakeLists.txt`.
 
- 2. Create a class containing this callback:
+ 2. Create a class containing a callback receiving the frames:
 ```
-    struct MyCallback {
-        virtual void onFrame(const cv::Mat &frame) {
-                window->updateImage(frame);
+    class MyAI {
+	    public:
+        void onFrame(const cv::Mat &frame) {
+                ai->detect(frame);
         }
     };
 ```
 
- 3. Create instances of the camera and the callback:
+ 3. Create instances of the camera and your application:
 
 ```
 Libcam2OpenCV camera;
-MyCallback myCallback;
+MyAI myAI;
 ```
 
  4. Register the callback
 
 ```
-   camera.registerCallback([&](const cv::Mat &mat, const libcamera::ControlList &meta){ myCallback.onFrame(mat); });
+   camera.registerCallback([&](const cv::Mat &mat, const libcamera::ControlList &meta){ myAI.onFrame(mat); });
 ```
 
  5. Start the camera delivering frames via the callback
@@ -61,7 +61,9 @@ MyCallback myCallback;
 camera.start();
 ```
 
- 6. Stop the camera
+ 6. sleep or run your GUI or wait for a keypress
+
+ 7. Stop the camera
 
 ```
 camera.stop();
