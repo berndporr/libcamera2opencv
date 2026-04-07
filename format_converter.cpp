@@ -180,25 +180,25 @@ void FormatConverter::start(const libcamera::PixelFormat format, int width, int 
 	default:
 		throw std::runtime_error("Invalid libcamera image format.");
 	};
-	dst.create(height, width, FormatConverter::openCVoutputFormat);
+	dstImage.create(height, width, FormatConverter::openCVoutputFormat);
 }
 
-cv::Mat FormatConverter::convert(const std::vector<libcamera::Span<uint8_t>> &srcmem)
+cv::Mat FormatConverter::convert(const std::vector<libcamera::Span<uint8_t>> &planes)
 {
 	switch (formatFamily_)
 	{
 	case NATIVE:
-		return cv::Mat(height_, width_, FormatConverter::openCVoutputFormat, srcmem[0].data());
+		return cv::Mat(height_, width_, FormatConverter::openCVoutputFormat, planes[0].data());
 	case MJPEG:
-		return convertJPG(srcmem);
+		return convertJPG(planes);
 	case RGB:
-		return convertRGB(srcmem);
+		return convertRGB(planes);
 	case YUVPacked:
-		return convertYUVPacked(srcmem);
+		return convertYUVPacked(planes);
 	case YUVSemiPlanar:
-		return convertYUVSemiPlanar(srcmem);
+		return convertYUVSemiPlanar(planes);
 	case YUVPlanar:
-		return convertYUVPlanar(srcmem);
+		return convertYUVPlanar(planes);
 	};
 	throw std::runtime_error("BUG: Invalid format family.");
 	return cv::Mat();
@@ -214,14 +214,14 @@ void FormatConverter::yuv_to_rgb(const int y, const int u, const int v, int *r, 
 	*b = CLIP((298 * c + 516 * d + 128) >> RGBSHIFT);
 }
 
-cv::Mat FormatConverter::convertJPG(const std::vector<libcamera::Span<uint8_t>> &srcmem)
+cv::Mat FormatConverter::convertJPG(const std::vector<libcamera::Span<uint8_t>> &planes)
 {
 	int jpegSubsamp, jpegColorspace;
 	int w = width_;
 	int h = height_;
 
 	// Read JPEG header
-	if (tjDecompressHeader3(tjInstance, srcmem[0].data(), srcmem[0].size(),
+	if (tjDecompressHeader3(tjInstance, planes[0].data(), planes[0].size(),
 							&w, &h, &jpegSubsamp, &jpegColorspace) != 0)
 	{
 		std::cerr << "tjDecompressHeader3 error: " << tjGetErrorStr() << std::endl;
@@ -230,8 +230,8 @@ cv::Mat FormatConverter::convertJPG(const std::vector<libcamera::Span<uint8_t>> 
 	if ((w == (int)width_) && (h == (int)height_))
 	{
 		// Decompress to BGR
-		if (tjDecompress2(tjInstance, srcmem[0].data(), srcmem[0].size(),
-						  dst.data, w, 0, h,
+		if (tjDecompress2(tjInstance, planes[0].data(), planes[0].size(),
+						  dstImage.data, w, 0, h,
 						  TJPF_BGR, TJFLAG_FASTDCT) != 0)
 		{
 			std::cerr << "tjDecompress2 error: " << tjGetErrorStr() << std::endl;
@@ -242,13 +242,13 @@ cv::Mat FormatConverter::convertJPG(const std::vector<libcamera::Span<uint8_t>> 
 		fprintf(stderr, "Wrong image size. Can't decompress. Have= %d x %d, Want= %d x %d.\n",
 				width_, height_, w, h);
 	}
-	return dst;
+	return dstImage;
 }
 
-cv::Mat FormatConverter::convertRGB(const std::vector<libcamera::Span<uint8_t>> &srcmem)
+cv::Mat FormatConverter::convertRGB(const std::vector<libcamera::Span<uint8_t>> &planes)
 {
-	const unsigned char *src = srcmem[0].data();
-	unsigned char *dstptr = dst.data;
+	const unsigned char *src = planes[0].data();
+	unsigned char *dstptr = dstImage.data;
 	unsigned int x, y;
 	int r, g, b;
 
@@ -268,12 +268,12 @@ cv::Mat FormatConverter::convertRGB(const std::vector<libcamera::Span<uint8_t>> 
 		src += stride_;
 		dstptr += width_ * 3;
 	}
-	return dst;
+	return dstImage;
 }
 
-cv::Mat FormatConverter::convertYUVPacked(const std::vector<libcamera::Span<uint8_t>> &srcmem)
+cv::Mat FormatConverter::convertYUVPacked(const std::vector<libcamera::Span<uint8_t>> &planes)
 {
-	const unsigned char *src = srcmem[0].data();
+	const unsigned char *src = planes[0].data();
 	unsigned int src_x, src_y, dst_x, dst_y;
 	unsigned int src_stride;
 	unsigned int dst_stride;
@@ -293,32 +293,32 @@ cv::Mat FormatConverter::convertYUVPacked(const std::vector<libcamera::Span<uint
 
 			y = src[src_y * src_stride + src_x * 4 + y_pos_];
 			yuv_to_rgb(y, cb, cr, &r, &g, &b);
-			dst.data[dst_y * dst_stride + 3 * dst_x + 0] = b;
-			dst.data[dst_y * dst_stride + 3 * dst_x + 1] = g;
-			dst.data[dst_y * dst_stride + 3 * dst_x + 2] = r;
+			dstImage.data[dst_y * dst_stride + 3 * dst_x + 0] = b;
+			dstImage.data[dst_y * dst_stride + 3 * dst_x + 1] = g;
+			dstImage.data[dst_y * dst_stride + 3 * dst_x + 2] = r;
 			dst_x++;
 
 			y = src[src_y * src_stride + src_x * 4 + y_pos_ + 2];
 			yuv_to_rgb(y, cb, cr, &r, &g, &b);
-			dst.data[dst_y * dst_stride + 3 * dst_x + 0] = b;
-			dst.data[dst_y * dst_stride + 3 * dst_x + 1] = g;
-			dst.data[dst_y * dst_stride + 3 * dst_x + 2] = r;
+			dstImage.data[dst_y * dst_stride + 3 * dst_x + 0] = b;
+			dstImage.data[dst_y * dst_stride + 3 * dst_x + 1] = g;
+			dstImage.data[dst_y * dst_stride + 3 * dst_x + 2] = r;
 			dst_x++;
 
 			src_x++;
 		}
 	}
-	return dst;
+	return dstImage;
 }
 
-cv::Mat FormatConverter::convertYUVPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem)
+cv::Mat FormatConverter::convertYUVPlanar(const std::vector<libcamera::Span<uint8_t>> &planes)
 {
 	unsigned int c_stride = stride_ / horzSubSample_;
 	unsigned int c_inc = horzSubSample_ == 1 ? 1 : 0;
-	const unsigned char *src_y = srcmem[0].data();
-	const unsigned char *src_cb = srcmem[1].data();
-	const unsigned char *src_cr = srcmem[2].data();
-	unsigned char *dstptr = dst.data;
+	const unsigned char *src_y = planes[0].data();
+	const unsigned char *src_cb = planes[1].data();
+	const unsigned char *src_cr = planes[2].data();
+	unsigned char *dstptr = dstImage.data;
 	int r, g, b;
 
 	if (nvSwap_)
@@ -353,18 +353,18 @@ cv::Mat FormatConverter::convertYUVPlanar(const std::vector<libcamera::Span<uint
 			dstptr += 3;
 		}
 	}
-	return dst;
+	return dstImage;
 }
 
-cv::Mat FormatConverter::convertYUVSemiPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem)
+cv::Mat FormatConverter::convertYUVSemiPlanar(const std::vector<libcamera::Span<uint8_t>> &planes)
 {
 	unsigned int c_stride = stride_ * (2 / horzSubSample_);
 	unsigned int c_inc = horzSubSample_ == 1 ? 2 : 0;
 	unsigned int cb_pos = nvSwap_ ? 1 : 0;
 	unsigned int cr_pos = nvSwap_ ? 0 : 1;
-	const unsigned char *src = srcmem[0].data();
-	const unsigned char *src_c = srcmem[1].data();
-	unsigned char *dstptr = dst.data;
+	const unsigned char *src = planes[0].data();
+	const unsigned char *src_c = planes[1].data();
+	unsigned char *dstptr = dstImage.data;
 	int r, g, b;
 
 	for (unsigned int y = 0; y < height_; y++)
@@ -394,5 +394,5 @@ cv::Mat FormatConverter::convertYUVSemiPlanar(const std::vector<libcamera::Span<
 			dstptr += 3;
 		}
 	}
-	return dst;
+	return dstImage;
 }

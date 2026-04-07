@@ -30,14 +30,14 @@ class FormatConverter
 {
 public:
 	/**
-	 * The input format which won't require any conversion. This should be
-	 * requested by the main program so that libcamera will try to capture in
-	 * this format.
+	 * The input format which won't require any conversion. libcamera should be
+	 * told to use this format so that ideally no conversion or even memory
+	 * allocation is needed here at all.
 	 */
 	static constexpr libcamera::PixelFormat nativeInputFormat = libcamera::formats::RGB888;
 
 	/**
-	 * The output openCV format no matter what the input format is.
+	 * The output openCV format no matter what libcamera's native input format is.
 	 */
 	static constexpr int openCVoutputFormat = CV_8UC3;
 
@@ -58,10 +58,10 @@ public:
 
 	/**
 	 * Converts a raw image and returns an openCV image.
-	 * @param srcmem The memory region which contains the raw image.
+	 * @param srcmem The libcamera planes which contain the raw image.
 	 * @return cv::Mat The openCV matrix which contains the converted image.
 	 */
-	cv::Mat convert(const std::vector<libcamera::Span<uint8_t>> &srcmem);
+	cv::Mat convert(const std::vector<libcamera::Span<uint8_t>> &planes);
 
 private:
 	enum FormatFamily
@@ -75,11 +75,11 @@ private:
 	};
 
 	void yuv_to_rgb(const int y, const int u, const int v, int *r, int *g, int *b) const;
-	cv::Mat convertJPG(const std::vector<libcamera::Span<uint8_t>> &srcmem);
-	cv::Mat convertRGB(const std::vector<libcamera::Span<uint8_t>> &srcmem);
-	cv::Mat convertYUVPacked(const std::vector<libcamera::Span<uint8_t>> &srcmem);
-	cv::Mat convertYUVPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem);
-	cv::Mat convertYUVSemiPlanar(const std::vector<libcamera::Span<uint8_t>> &srcmem);
+	cv::Mat convertJPG(const std::vector<libcamera::Span<uint8_t>> &planes);
+	cv::Mat convertRGB(const std::vector<libcamera::Span<uint8_t>> &planes);
+	cv::Mat convertYUVPacked(const std::vector<libcamera::Span<uint8_t>> &planes);
+	cv::Mat convertYUVPlanar(const std::vector<libcamera::Span<uint8_t>> &planes);
+	cv::Mat convertYUVSemiPlanar(const std::vector<libcamera::Span<uint8_t>> &planes);
 
 	libcamera::PixelFormat format_;
 	unsigned int width_;
@@ -106,6 +106,6 @@ private:
 	/* JPEG decompressor */
 	tjhandle tjInstance = nullptr;
 
-	/* The destination matrix */
-	cv::Mat dst;
+	/* The destination Image matrix */
+	cv::Mat dstImage;
 };
