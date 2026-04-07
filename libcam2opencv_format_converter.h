@@ -55,6 +55,10 @@ public:
 	 */
 	void stop();
 
+	~FormatConverter() {
+		stop();
+	}
+
 	/**
 	 * Converts a raw image and returns an openCV image.
 	 * @param planes The libcamera planes which contain the raw image.
