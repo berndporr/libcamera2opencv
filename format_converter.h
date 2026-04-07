@@ -58,7 +58,7 @@ public:
 
 	/**
 	 * Converts a raw image and returns an openCV image.
-	 * @param srcmem The libcamera planes which contain the raw image.
+	 * @param planes The libcamera planes which contain the raw image.
 	 * @return cv::Mat The openCV matrix which contains the converted image.
 	 */
 	cv::Mat convert(const std::vector<libcamera::Span<uint8_t>> &planes);
