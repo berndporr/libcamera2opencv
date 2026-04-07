@@ -17,7 +17,7 @@
 #include <atomic>
 #include <sys/mman.h>
 #include <opencv2/opencv.hpp>
-#include "format_converter.h"
+#include "libcam2opencv_format_converter.h"
 
 // need to undefine QT defines here as libcamera uses the same expressions (!).
 #undef signals

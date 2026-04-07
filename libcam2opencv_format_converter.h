@@ -19,7 +19,6 @@
 #include <libcamera/libcamera.h>
 #include <opencv2/opencv.hpp>
 #include <turbojpeg.h>
-
 #include <vector>
 #include <span>
 

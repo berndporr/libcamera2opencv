@@ -6,7 +6,7 @@
  * Convert buffer to openCV's BGRA
  */
 
-#include "format_converter.h"
+#include "libcam2opencv_format_converter.h"
 
 #include <errno.h>
 #include <utility>
