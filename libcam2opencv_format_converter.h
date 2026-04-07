@@ -55,7 +55,8 @@ public:
 	 */
 	void stop();
 
-	~FormatConverter() {
+	~FormatConverter()
+	{
 		stop();
 	}
 
@@ -107,7 +108,7 @@ private:
 	unsigned int cb_pos_;
 
 	/* JPEG decompressor */
-	tjhandle tjInstance = nullptr;
+	tjhandle tjInstance = NULL;
 
 	/* The destination Image matrix */
 	cv::Mat dstImage;

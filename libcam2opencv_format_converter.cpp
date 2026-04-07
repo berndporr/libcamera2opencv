@@ -32,7 +32,7 @@ void FormatConverter::stop()
 	if (tjInstance)
 	{
 		tjDestroy(tjInstance);
-		tjInstance = nullptr;
+		tjInstance = NULL;
 	}
 }
 
