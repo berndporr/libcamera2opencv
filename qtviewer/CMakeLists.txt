@@ -16,12 +16,12 @@ find_package(PkgConfig)
 find_package(OpenCV REQUIRED)
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
 pkg_check_modules(TURBOJPEG REQUIRED libturbojpeg)
+pkg_check_modules(LIBCAMERA REQUIRED IMPORTED_TARGET libcamera)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-pkg_check_modules(LIBCAMERA REQUIRED IMPORTED_TARGET libcamera)
 message(STATUS "libcamera library found:")
 message(STATUS "    version: ${LIBCAMERA_VERSION}")
 message(STATUS "    libraries: ${LIBCAMERA_LINK_LIBRARIES}")
@@ -31,7 +31,18 @@ message(STATUS "opencv:")
 message(STATUS "    version: ${OpenCV_VERSION}")
 message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 
-include_directories(${CMAKE_SOURCE_DIR} ${LIBCAMERA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS} ..)
+message(STATUS "turbojpeg:")
+message(STATUS "    version: ${TURBOJPEG_VERSION}")
+message(STATUS "    libraries: ${TURBOJPEG_LINK_LIBRARIES}")
+message(STATUS "    include path: ${TURBOJPEG_INCLUDE_DIRS}")
+
+include_directories(
+	${CMAKE_SOURCE_DIR}
+	${TURBOJPEG_INCLUDE_DIRS}
+	${LIBCAMERA_INCLUDE_DIRS}
+	${OPENCV_INCLUDE_DIRS}
+	..
+)
 include(GNUInstallDirs)
 
 add_executable(qtviewer
@@ -44,4 +55,4 @@ target_link_libraries(qtviewer PkgConfig::LIBCAMERA)
 target_link_libraries(qtviewer Qt6::Widgets)
 target_link_libraries(qtviewer ${OpenCV_LIBS})
 target_link_libraries(qtviewer cam2opencv)
-target_link_libraries(qtviewer turbojpeg)
+target_link_libraries(qtviewer ${TURBOJPEG_LINK_LIBRARIES})

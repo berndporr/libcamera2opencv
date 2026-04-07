@@ -15,8 +15,8 @@ set (CMAKE_CXX_FLAGS "-pedantic -Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -
 find_package(PkgConfig)
 find_package(OpenCV REQUIRED)
 pkg_check_modules(TURBOJPEG REQUIRED libturbojpeg)
-
 pkg_check_modules(LIBCAMERA REQUIRED IMPORTED_TARGET libcamera)
+
 message(STATUS "libcamera library found:")
 message(STATUS "    version: ${LIBCAMERA_VERSION}")
 message(STATUS "    libraries: ${LIBCAMERA_LINK_LIBRARIES}")
@@ -26,14 +26,24 @@ message(STATUS "opencv:")
 message(STATUS "    version: ${OpenCV_VERSION}")
 message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 
-include_directories(${CMAKE_SOURCE_DIR} ${LIBCAMERA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS})
+message(STATUS "turbojpeg:")
+message(STATUS "    version: ${TURBOJPEG_VERSION}")
+message(STATUS "    libraries: ${TURBOJPEG_LINK_LIBRARIES}")
+message(STATUS "    include path: ${TURBOJPEG_INCLUDE_DIRS}")
+
+include_directories(
+	${CMAKE_SOURCE_DIR}
+	${LIBCAMERA_INCLUDE_DIRS}
+	${OPENCV_INCLUDE_DIRS}
+	${TURBOJPEG_INCLUDE_DIRS}
+	)
 include(GNUInstallDirs)
 
 add_subdirectory(metadataprinter)
 
 add_library(cam2opencv STATIC libcam2opencv.cpp format_converter.cpp)
 
-target_link_libraries(cam2opencv PkgConfig::LIBCAMERA ${OpenCV_LIBS} turbojpeg)
+target_link_libraries(cam2opencv PUBLIC PkgConfig::LIBCAMERA ${OpenCV_LIBS} ${TURBOJPEG_LINK_LIBRARIES})
 
 set_target_properties(cam2opencv PROPERTIES
   PUBLIC_HEADER libcam2opencv.h)

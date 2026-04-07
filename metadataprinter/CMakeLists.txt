@@ -12,11 +12,12 @@ set (CMAKE_CXX_STANDARD 17)
 
 set (CMAKE_CXX_FLAGS "-Wall -Winvalid-pch -Wnon-virtual-dtor -Wextra -Wno-unused-parameter")
 
-include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/.. ${LIBCAMERA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS})
 include(GNUInstallDirs)
 
 add_executable(printdata
   printdata.cpp
 )
 
-target_link_libraries(printdata turbojpeg PkgConfig::LIBCAMERA ${OpenCV_LIBS} cam2opencv)
+target_include_directories(printdata PUBLIC ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/..)
+
+target_link_libraries(printdata cam2opencv)
