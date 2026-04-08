@@ -1,14 +1,15 @@
 # libcamera to openCV library
 
 This is a wrapper around libcamera which hides all its complexity and
-makes it as easy as possible to get a humble callback delivering openCV
+makes it as easy as possible to get a humble callback delivering openCV BGR
 frames.
 
-The motivation behind this wrapper is that the raw callback interface
-of libcamera forces the user to understand complex memory mapping and 
-conventions buried deep in its source code to get RGB frames. 
-This library is an attempt to abstract all
-this complexity away and provide a friendly callback delivering openCV images.
+The motivation behind this wrapper is that libcamera's raw callback interface
+forces the user to understand complex memory mapping, mmap and 
+obscure conventions buried deep in its example applications. 
+This wrapper here is an attempt to abstract all
+this complexity away and instead provide a simple friendly callback delivering openCV BGR frames
+so that the coder can focus on their actual coding task.
 
 Works with:
  - Raspberry PI CSI cameras
