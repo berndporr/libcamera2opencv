@@ -17,7 +17,7 @@ Works with:
 ## Prerequisites
 
 ```
-apt install libopencv-dev libcamera-dev libjpeg-turbo8-dev libturbojpeg0-dev
+apt install libopencv-dev libcamera-dev libturbojpeg0-dev
 ```
 
 ## Compilation and installation
