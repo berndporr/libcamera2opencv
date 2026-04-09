@@ -234,7 +234,10 @@ cv::Mat FormatConverter::convertJPG(const std::vector<libcamera::Span<uint8_t>> 
 						  dstImage.data, w, 0, h,
 						  TJPF_BGR, TJFLAG_FASTDCT) != 0)
 		{
-			std::cerr << "tjDecompress2 error: " << tjGetErrorStr() << std::endl;
+			const std::string errstr = tjGetErrorStr();
+			// print only error if it's not the warning about extraneous bytes
+			if (errstr.find("extraneous bytes before marker") == std::string::npos) 
+				std::cerr << "tjDecompress2 error: " << errstr << std::endl;
 		}
 	}
 	else
