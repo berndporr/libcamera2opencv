@@ -2,17 +2,10 @@
 
 Window::Window()
 {
-	camera.registerCallback([&](const cv::Mat &mat, const libcamera::ControlList &){updateImage(mat);});
 	image = new QLabel;
 	vLayout = new QVBoxLayout();
 	vLayout->addWidget(image);
 	setLayout(vLayout);
-	camera.start();
-}
-
-Window::~Window()
-{
-	camera.stop();
 }
 
 void Window::updateImage(const cv::Mat &mat) {

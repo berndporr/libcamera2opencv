@@ -6,10 +6,10 @@ frames.
 
 The motivation behind this wrapper is that libcamera's raw callback interface
 forces the user to understand complex memory mapping, mmap and 
-obscure conventions buried deep in its example applications. 
+conventions buried deep in its example applications. 
 This wrapper here is an attempt to abstract all
 this complexity away and instead provide a simple friendly callback delivering openCV BGR frames
-so that the coder can focus on their actual coding task.
+so that the coder can focus on their actual task.
 
 Works with:
  - Raspberry PI CSI cameras

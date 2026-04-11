@@ -17,14 +17,11 @@ class Window : public QWidget
 
 public:
     Window();
-    ~Window();
     void updateImage(const cv::Mat &mat);
 
+private:
     QVBoxLayout  *vLayout;  // vert layout
     QLabel       *image;
-
-    Libcam2OpenCV camera;
-    
  };
 
 #endif // WINDOW_H

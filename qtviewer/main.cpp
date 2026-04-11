@@ -11,6 +11,15 @@ int main(int argc, char *argv[])
 	Window window;
 	window.show();
 
+	Libcam2OpenCV camera;
+	camera.registerCallback([&](const cv::Mat &mat, const libcamera::ControlList &)
+							{ window.updateImage(mat); });
+
+	camera.start();
+
 	// execute the application
-	return app.exec();
+	const int r = app.exec();
+
+	camera.stop();
+	return r;
 }
