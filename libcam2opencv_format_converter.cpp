@@ -188,7 +188,7 @@ cv::Mat FormatConverter::convert(const std::vector<libcamera::Span<uint8_t>> &pl
 	switch (formatFamily_)
 	{
 	case NATIVE:
-		return cv::Mat(height_, width_, FormatConverter::openCVoutputFormat, planes[0].data());
+                return cv::Mat(height_, width_, FormatConverter::openCVoutputFormat, planes[0].data(),stride_);
 	case MJPEG:
 		return convertJPG(planes);
 	case RGB:
