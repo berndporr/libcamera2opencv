@@ -56,18 +56,26 @@ MyAI myAI;
    camera.registerCallback([&](const cv::Mat &mat, const libcamera::ControlList &meta){ myAI.onFrame(mat); });
 ```
 
- 5. Start the camera delivering frames via the callback
+ 5. Create an instance of the cameramanager (only one allowed for all cameras) and start it:
+```
+libcamera::CameraManager cm;
+cm.start();
 
 ```
-camera.start();
+
+ 6. Start the camera delivering frames via the callback
+
+```
+camera.start(cm);
 ```
 
- 6. sleep or run your GUI or wait for a keypress
+ 7. sleep or run your GUI or wait for a keypress
 
- 7. Stop the camera
+ 8. Stop the camera and the cameramanager
 
 ```
 camera.stop();
+cm.stop();
 ```
 
 ## Examples
@@ -84,6 +92,10 @@ check the framerate.
 The subdirectory `qtviewer` contains a simple QT application which displays the camera on screen.
 
 ![alt tag](qtviewer_screenshot.png)
+
+### Dual Camera Viewer
+
+The subdirectory `dualcamviewer` contains a QT application which displays two cameras on screen.
 
 ## Credits
 

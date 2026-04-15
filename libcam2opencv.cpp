@@ -55,34 +55,15 @@ void Libcam2OpenCV::requestComplete(libcamera::Request *request)
     camera->queueRequest(request);
 }
 
-void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
+void Libcam2OpenCV::start(libcamera::CameraManager &cm,
+                          Libcam2OpenCVSettings settings)
 {
-    /*
-     * --------------------------------------------------------------------
-     * Create a Camera Manager.
-     *
-     * The Camera Manager is responsible for enumerating all the Camera
-     * in the system, by associating Pipeline Handlers with media entities
-     * registered in the system.
-     *
-     * The CameraManager provides a list of available Cameras that
-     * applications can operate on.
-     *
-     * When the CameraManager is no longer to be used, it should be deleted.
-     * We use a unique_ptr here to manage the lifetime automatically.
-     *
-     * There can only be a single CameraManager constructed within any
-     * process space.
-     */
-    cm = std::make_unique<libcamera::CameraManager>();
-    cm->start();
-
     /*
      * List the names of the Cameras registered in the
      * system.
      */
     std::cerr << "Cams:" << std::endl;
-    for (auto const &camera : cm->cameras())
+    for (auto const &camera : cm.cameras())
         std::cerr << " - " << camera.get()->id() << std::endl;
 
     /*
@@ -99,24 +80,22 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
      * Application lock usage of Camera by 'acquiring' them.
      * Once done with it, application shall similarly 'release' the Camera.
      */
-    if (cm->cameras().empty())
+    if (cm.cameras().empty())
     {
         std::cerr << "No cameras were identified on the system."
                   << std::endl;
-        cm->stop();
         return;
     }
 
-    if (settings.cameraIndex >= cm->cameras().size())
+    if (settings.cameraIndex >= cm.cameras().size())
     {
         std::cerr << "Camera index out of range."
                   << std::endl;
-        cm->stop();
         return;
     }
 
-    std::string cameraId = cm->cameras()[settings.cameraIndex]->id();
-    camera = cm->get(cameraId);
+    std::string cameraId = cm.cameras()[settings.cameraIndex]->id();
+    camera = cm.get(cameraId);
     camera->acquire();
 
     /*
@@ -247,7 +226,7 @@ void Libcam2OpenCV::start(Libcam2OpenCVSettings settings)
                 {
                     void *memory = mmap(NULL, buffer_size, PROT_READ | PROT_WRITE, MAP_SHARED, plane.fd.get(), 0);
                     framebuffer2memory[buffer.get()].push_back(libcamera::Span<uint8_t>(static_cast<uint8_t *>(memory),
-                                                                                    buffer_size));
+                                                                                        buffer_size));
                     buffer_size = 0;
                 }
             }
@@ -393,9 +372,6 @@ void Libcam2OpenCV::stop()
         camera->release();
         camera.reset();
     }
-    if (cm)
-        cm->stop();
-    cm.reset();
     formatConverter.stop();
 }
 

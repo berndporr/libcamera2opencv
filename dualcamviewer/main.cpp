@@ -7,28 +7,32 @@ int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
 
+	libcamera::CameraManager cm;
+	cm.start();
+
 	// create the window
 	Window window;
 	window.show();
 
 	Libcam2OpenCV camera1;
 	camera1.registerCallback([&](const cv::Mat &mat, const libcamera::ControlList &)
-							{ window.updateImage1(mat); });
+							 { window.updateImage1(mat); });
 
 	Libcam2OpenCV camera2;
 	camera2.registerCallback([&](const cv::Mat &mat, const libcamera::ControlList &)
-							{ window.updateImage2(mat); });
+							 { window.updateImage2(mat); });
 
 	Libcam2OpenCVSettings settings;
 	settings.cameraIndex = 0;
-	camera1.start(settings);
+	camera1.start(cm,settings);
 	settings.cameraIndex = 1;
-	camera2.start(settings);
+	camera2.start(cm,settings);
 
 	// execute the application
 	const int r = app.exec();
 
 	camera1.stop();
 	camera2.stop();
+	cm.stop();
 	return r;
 }

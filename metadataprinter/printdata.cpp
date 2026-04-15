@@ -24,6 +24,9 @@ int main(int argc, char *argv[])
 {
     std::cout << "Press any key to stop" << std::endl;
 
+    libcamera::CameraManager cm;
+    cm.start();
+
     // create an instance of the camera class
     Libcam2OpenCV camera;
 
@@ -41,13 +44,16 @@ int main(int argc, char *argv[])
     settings.framerate = 30;
 
     // start the camera with these settings
-    camera.start(settings);
+    camera.start(cm,settings);
 
     // do nothing till the user presses any key
     getchar();
 
     // stop the camera
     camera.stop();
+
+    // stopping the cameramanager
+    cm.stop();
 
     // that's it!
     printf("\n");

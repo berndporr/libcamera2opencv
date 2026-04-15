@@ -99,7 +99,8 @@ public:
     /**
      * Starts the camera and the callback at default resolution and framerate
      **/
-    void start(Libcam2OpenCVSettings settings = Libcam2OpenCVSettings());
+    void start(libcamera::CameraManager &cm,
+               Libcam2OpenCVSettings settings = Libcam2OpenCVSettings());
 
     /**
      * Stops the camera and the callback
@@ -113,12 +114,11 @@ public:
 
 private:
     std::shared_ptr<libcamera::Camera> camera;
-	std::map<libcamera::FrameBuffer *, std::vector<libcamera::Span<uint8_t>>> framebuffer2memory;
+    std::map<libcamera::FrameBuffer *, std::vector<libcamera::Span<uint8_t>>> framebuffer2memory;
     std::unique_ptr<libcamera::CameraConfiguration> config;
     OnFrame onFrame;
     std::unique_ptr<libcamera::FrameBufferAllocator> allocator;
     libcamera::Stream *stream = nullptr;
-    std::unique_ptr<libcamera::CameraManager> cm;
     std::vector<std::unique_ptr<libcamera::Request>> requests;
     libcamera::ControlList controls;
     FormatConverter formatConverter;
