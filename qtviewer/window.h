@@ -1,8 +1,6 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include <qwt/qwt_thermo.h>
-
 #include <QBoxLayout>
 #include <QPushButton>
 #include <QLabel>

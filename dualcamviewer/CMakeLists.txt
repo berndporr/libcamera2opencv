@@ -45,14 +45,14 @@ include_directories(
 )
 include(GNUInstallDirs)
 
-add_executable(qtviewer
+add_executable(dualcamviewer
   window.cpp
   main.cpp
 )
 
-target_link_directories(qtviewer PUBLIC ..)
-target_link_libraries(qtviewer PkgConfig::LIBCAMERA)
-target_link_libraries(qtviewer Qt6::Widgets)
-target_link_libraries(qtviewer ${OpenCV_LIBS})
-target_link_libraries(qtviewer cam2opencv)
-target_link_libraries(qtviewer ${TURBOJPEG_LINK_LIBRARIES})
+target_link_directories(dualcamviewer PUBLIC ..)
+target_link_libraries(dualcamviewer PkgConfig::LIBCAMERA)
+target_link_libraries(dualcamviewer Qt6::Widgets)
+target_link_libraries(dualcamviewer ${OpenCV_LIBS})
+target_link_libraries(dualcamviewer cam2opencv)
+target_link_libraries(dualcamviewer ${TURBOJPEG_LINK_LIBRARIES})
