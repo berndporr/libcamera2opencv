@@ -78,6 +78,11 @@ camera.stop();
 cm.stop();
 ```
 
+## Class doc
+
+The full class documentation is here:
+https://berndporr.github.io/libcamera2opencv/
+
 ## Examples
 
 ### Metadata printer
