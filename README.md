@@ -89,18 +89,18 @@ https://berndporr.github.io/libcamera2opencv/
 
 In the subdirectory `metadataprinter` is a demo which just prints the sensor
 metadata from the callback. This is useful to see what
-info is available for example the sensor timestamp to
+info is available, for example the sensor timestamp to
 check the framerate.
 
 ### QT Image Viewer
 
-The subdirectory `qtviewer` contains a simple QT application which displays the camera on screen. This shows also shows how the callback triggers QT's window update without resorting to message queues as it deals with the heavy lifting itself. The callback returns as quickly as possible.
+The subdirectory [qtviewer](qtviewer) contains a simple QT application which displays the camera on screen. This shows also how the callback triggers QT's `update()` without resorting to ugly message queues as QT deals with the heavy lifting itself -- while the callback returns as quickly as possible.
 
 ![alt tag](qtviewer_screenshot.png)
 
 ### Dual Camera Viewer
 
-The subdirectory `dualcamviewer` contains a QT application which displays two cameras on screen. The Raspberry PI allows 2 cameras to be connected and you see how two callbacks per camera can be set up. Again, it demos how the image update is handled with QT's upated() command keeping the callback as short as possible and leaving it to QT to do the actual displaying.
+The Raspberry PI 5 allows 2 cameras to be connected. The subdirectory [dualcamviewer](dualcamviewer) contains a QT application which displays the images of two cameras on screen. Again, it shows how the image update is handled with QT's update() command keeping the callback as short as possible and leaving it to QT to do the actual displaying.
 
 ## Credits
 
