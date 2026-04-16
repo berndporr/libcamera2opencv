@@ -86,10 +86,19 @@ struct Libcam2OpenCVSettings
 class Libcam2OpenCV
 {
 public:
+    /**
+     * The callback prototype carrying the current openCV frame.
+     * This callback needs to be defined by you and usually as a lambda
+     * function:
+     * [&](const cv::Mat &mat, const libcamera::ControlList &) { myImageProcessor(mat); });
+     * which is then registered with registerCallback.
+     */
     using OnFrame = std::function<void(const cv::Mat &, const libcamera::ControlList &)>;
 
     /**
-     * Register the callback for the frame data
+     * Register the callback for the frame data. This will be usually done with a lambda function
+     * connecting Libcam2OpenCV to a class processing the image:
+     * registerCallback([&](const cv::Mat &mat, const libcamera::ControlList &){ mystuff.process(mat); });
      **/
     void registerCallback(OnFrame cb)
     {

@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['opencv_20library_0',['libcamera to openCV library',['../index.html',1,'']]]
+  ['onframe_0',['OnFrame',['../classLibcam2OpenCV.html#a4baaa149fb072ba783da403be77e2da2',1,'Libcam2OpenCV']]],
+  ['opencv_20library_1',['libcamera to openCV library',['../index.html',1,'']]]
 ];

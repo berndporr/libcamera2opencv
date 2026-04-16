@@ -70,21 +70,43 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classLibcam2OpenCV-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">Libcam2OpenCV Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a4baaa149fb072ba783da403be77e2da2" id="r_a4baaa149fb072ba783da403be77e2da2"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLibcam2OpenCV.html#a4baaa149fb072ba783da403be77e2da2">OnFrame</a> = std::function&lt; void(const cv::Mat &amp;, const libcamera::ControlList &amp;)&gt;</td></tr>
+<tr class="separator:a4baaa149fb072ba783da403be77e2da2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aec25da454332e03c35ca8808875cd72b" id="r_aec25da454332e03c35ca8808875cd72b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLibcam2OpenCV.html#aec25da454332e03c35ca8808875cd72b">registerCallback</a> (OnFrame cb)</td></tr>
+<tr class="memitem:aec25da454332e03c35ca8808875cd72b" id="r_aec25da454332e03c35ca8808875cd72b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLibcam2OpenCV.html#aec25da454332e03c35ca8808875cd72b">registerCallback</a> (<a class="el" href="classLibcam2OpenCV.html#a4baaa149fb072ba783da403be77e2da2">OnFrame</a> cb)</td></tr>
 <tr class="separator:aec25da454332e03c35ca8808875cd72b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a247328a9cd2cbadde311d860f29bd44e" id="r_a247328a9cd2cbadde311d860f29bd44e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLibcam2OpenCV.html#a247328a9cd2cbadde311d860f29bd44e">start</a> (libcamera::CameraManager &amp;cm, <a class="el" href="structLibcam2OpenCVSettings.html">Libcam2OpenCVSettings</a> settings=<a class="el" href="structLibcam2OpenCVSettings.html">Libcam2OpenCVSettings</a>())</td></tr>
 <tr class="separator:a247328a9cd2cbadde311d860f29bd44e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70cbfc78f8c5850701cd05a67dd11a78" id="r_a70cbfc78f8c5850701cd05a67dd11a78"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLibcam2OpenCV.html#a70cbfc78f8c5850701cd05a67dd11a78">stop</a> ()</td></tr>
 <tr class="separator:a70cbfc78f8c5850701cd05a67dd11a78"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a4baaa149fb072ba783da403be77e2da2" name="a4baaa149fb072ba783da403be77e2da2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4baaa149fb072ba783da403be77e2da2">&#9670;&#160;</a></span>OnFrame</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classLibcam2OpenCV.html#a4baaa149fb072ba783da403be77e2da2">Libcam2OpenCV::OnFrame</a> =  std::function&lt;void(const cv::Mat &amp;, const libcamera::ControlList &amp;)&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>The callback prototype carrying the current openCV frame. This callback needs to be defined by you and usually as a lambda function: [&amp;](const cv::Mat &amp;mat, const libcamera::ControlList &amp;) { myImageProcessor(mat); }); which is then registered with registerCallback. </p>
+
+</div>
+</div>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="aec25da454332e03c35ca8808875cd72b" name="aec25da454332e03c35ca8808875cd72b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aec25da454332e03c35ca8808875cd72b">&#9670;&#160;</a></span>registerCallback()</h2>
@@ -98,7 +120,7 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">void Libcam2OpenCV::registerCallback </td>
           <td>(</td>
-          <td class="paramtype">OnFrame&#160;</td>
+          <td class="paramtype"><a class="el" href="classLibcam2OpenCV.html#a4baaa149fb072ba783da403be77e2da2">OnFrame</a>&#160;</td>
           <td class="paramname"><em>cb</em></td><td>)</td>
           <td></td>
         </tr>
@@ -109,7 +131,7 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Register the callback for the frame data </p>
+<p>Register the callback for the frame data. This will be usually done with a lambda function connecting <a class="el" href="classLibcam2OpenCV.html">Libcam2OpenCV</a> to a class processing the image: registerCallback([&amp;](const cv::Mat &amp;mat, const libcamera::ControlList &amp;){ mystuff.process(mat); }); </p>
 
 </div>
 </div>
@@ -166,7 +188,7 @@ Public Member Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Apr 16 2026 11:44:51 for libcamera2opencv by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Thu Apr 16 2026 12:14:33 for libcamera2opencv by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

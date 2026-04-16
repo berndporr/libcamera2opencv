@@ -135,53 +135,54 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno"><a class="line" href="classLibcam2OpenCV.html">   86</a></span><span class="keyword">class </span><a class="code hl_class" href="classLibcam2OpenCV.html">Libcam2OpenCV</a></div>
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>{</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <span class="keyword">using </span>OnFrame = std::function&lt;void(<span class="keyword">const</span> cv::Mat &amp;, <span class="keyword">const</span> libcamera::ControlList &amp;)&gt;;</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
-<div class="foldopen" id="foldopen00094" data-start="{" data-end="}">
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno"><a class="line" href="classLibcam2OpenCV.html#aec25da454332e03c35ca8808875cd72b">   94</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classLibcam2OpenCV.html#aec25da454332e03c35ca8808875cd72b">registerCallback</a>(OnFrame cb)</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    {</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>        onFrame = cb;</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    }</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno"><a class="line" href="classLibcam2OpenCV.html#a4baaa149fb072ba783da403be77e2da2">   96</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="classLibcam2OpenCV.html#a4baaa149fb072ba783da403be77e2da2">OnFrame</a> = std::function&lt;void(<span class="keyword">const</span> cv::Mat &amp;, <span class="keyword">const</span> libcamera::ControlList &amp;)&gt;;</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
+<div class="foldopen" id="foldopen00103" data-start="{" data-end="}">
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno"><a class="line" href="classLibcam2OpenCV.html#aec25da454332e03c35ca8808875cd72b">  103</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classLibcam2OpenCV.html#aec25da454332e03c35ca8808875cd72b">registerCallback</a>(<a class="code hl_typedef" href="classLibcam2OpenCV.html#a4baaa149fb072ba783da403be77e2da2">OnFrame</a> cb)</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    {</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        onFrame = cb;</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    }</div>
 </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno"><a class="line" href="classLibcam2OpenCV.html#a247328a9cd2cbadde311d860f29bd44e">  102</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classLibcam2OpenCV.html#a247328a9cd2cbadde311d860f29bd44e">start</a>(libcamera::CameraManager &amp;cm,</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>               <a class="code hl_struct" href="structLibcam2OpenCVSettings.html">Libcam2OpenCVSettings</a> settings = <a class="code hl_struct" href="structLibcam2OpenCVSettings.html">Libcam2OpenCVSettings</a>());</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno"><a class="line" href="classLibcam2OpenCV.html#a70cbfc78f8c5850701cd05a67dd11a78">  108</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classLibcam2OpenCV.html#a70cbfc78f8c5850701cd05a67dd11a78">stop</a>();</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span> </div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    <a class="code hl_class" href="classLibcam2OpenCV.html">~Libcam2OpenCV</a>()</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    {</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>        <a class="code hl_function" href="classLibcam2OpenCV.html#a70cbfc78f8c5850701cd05a67dd11a78">stop</a>();</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    }</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span> </div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    std::shared_ptr&lt;libcamera::Camera&gt; camera;</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    std::map&lt;libcamera::FrameBuffer *, std::vector&lt;libcamera::Span&lt;uint8_t&gt;&gt;&gt; framebuffer2memory;</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    std::unique_ptr&lt;libcamera::CameraConfiguration&gt; config;</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    OnFrame onFrame;</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    std::unique_ptr&lt;libcamera::FrameBufferAllocator&gt; allocator;</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    libcamera::Stream *stream = <span class="keyword">nullptr</span>;</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    std::vector&lt;std::unique_ptr&lt;libcamera::Request&gt;&gt; requests;</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    libcamera::ControlList controls;</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    FormatConverter formatConverter;</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    std::mutex shutdown_mutex;</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span> </div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <span class="comment">/*</span></div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span><span class="comment">     * --------------------------------------------------------------------</span></div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span><span class="comment">     * Handle RequestComplete</span></div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span><span class="comment">     *</span></div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span><span class="comment">     * For each Camera::requestCompleted Signal emitted from the Camera the</span></div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span><span class="comment">     * connected Slot is invoked.</span></div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span><span class="comment">     */</span></div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    <span class="keywordtype">void</span> requestComplete(libcamera::Request *request);</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>};</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno"><a class="line" href="classLibcam2OpenCV.html#a247328a9cd2cbadde311d860f29bd44e">  111</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classLibcam2OpenCV.html#a247328a9cd2cbadde311d860f29bd44e">start</a>(libcamera::CameraManager &amp;cm,</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>               <a class="code hl_struct" href="structLibcam2OpenCVSettings.html">Libcam2OpenCVSettings</a> settings = <a class="code hl_struct" href="structLibcam2OpenCVSettings.html">Libcam2OpenCVSettings</a>());</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span> </div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno"><a class="line" href="classLibcam2OpenCV.html#a70cbfc78f8c5850701cd05a67dd11a78">  117</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classLibcam2OpenCV.html#a70cbfc78f8c5850701cd05a67dd11a78">stop</a>();</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span> </div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    <a class="code hl_class" href="classLibcam2OpenCV.html">~Libcam2OpenCV</a>()</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    {</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>        <a class="code hl_function" href="classLibcam2OpenCV.html#a70cbfc78f8c5850701cd05a67dd11a78">stop</a>();</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    }</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    std::shared_ptr&lt;libcamera::Camera&gt; camera;</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    std::map&lt;libcamera::FrameBuffer *, std::vector&lt;libcamera::Span&lt;uint8_t&gt;&gt;&gt; framebuffer2memory;</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    std::unique_ptr&lt;libcamera::CameraConfiguration&gt; config;</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    <a class="code hl_typedef" href="classLibcam2OpenCV.html#a4baaa149fb072ba783da403be77e2da2">OnFrame</a> onFrame;</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    std::unique_ptr&lt;libcamera::FrameBufferAllocator&gt; allocator;</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    libcamera::Stream *stream = <span class="keyword">nullptr</span>;</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    std::vector&lt;std::unique_ptr&lt;libcamera::Request&gt;&gt; requests;</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    libcamera::ControlList controls;</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    FormatConverter formatConverter;</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    std::mutex shutdown_mutex;</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span> </div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    <span class="comment">/*</span></div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span><span class="comment">     * --------------------------------------------------------------------</span></div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span><span class="comment">     * Handle RequestComplete</span></div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span><span class="comment">     *</span></div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span><span class="comment">     * For each Camera::requestCompleted Signal emitted from the Camera the</span></div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span><span class="comment">     * connected Slot is invoked.</span></div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span><span class="comment">     */</span></div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    <span class="keywordtype">void</span> requestComplete(libcamera::Request *request);</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>};</div>
 </div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span> </div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span> </div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="aclassLibcam2OpenCV_html"><div class="ttname"><a href="classLibcam2OpenCV.html">Libcam2OpenCV</a></div><div class="ttdef"><b>Definition</b> libcam2opencv.h:87</div></div>
 <div class="ttc" id="aclassLibcam2OpenCV_html_a247328a9cd2cbadde311d860f29bd44e"><div class="ttname"><a href="classLibcam2OpenCV.html#a247328a9cd2cbadde311d860f29bd44e">Libcam2OpenCV::start</a></div><div class="ttdeci">void start(libcamera::CameraManager &amp;cm, Libcam2OpenCVSettings settings=Libcam2OpenCVSettings())</div></div>
+<div class="ttc" id="aclassLibcam2OpenCV_html_a4baaa149fb072ba783da403be77e2da2"><div class="ttname"><a href="classLibcam2OpenCV.html#a4baaa149fb072ba783da403be77e2da2">Libcam2OpenCV::OnFrame</a></div><div class="ttdeci">std::function&lt; void(const cv::Mat &amp;, const libcamera::ControlList &amp;)&gt; OnFrame</div><div class="ttdef"><b>Definition</b> libcam2opencv.h:96</div></div>
 <div class="ttc" id="aclassLibcam2OpenCV_html_a70cbfc78f8c5850701cd05a67dd11a78"><div class="ttname"><a href="classLibcam2OpenCV.html#a70cbfc78f8c5850701cd05a67dd11a78">Libcam2OpenCV::stop</a></div><div class="ttdeci">void stop()</div></div>
-<div class="ttc" id="aclassLibcam2OpenCV_html_aec25da454332e03c35ca8808875cd72b"><div class="ttname"><a href="classLibcam2OpenCV.html#aec25da454332e03c35ca8808875cd72b">Libcam2OpenCV::registerCallback</a></div><div class="ttdeci">void registerCallback(OnFrame cb)</div><div class="ttdef"><b>Definition</b> libcam2opencv.h:94</div></div>
+<div class="ttc" id="aclassLibcam2OpenCV_html_aec25da454332e03c35ca8808875cd72b"><div class="ttname"><a href="classLibcam2OpenCV.html#aec25da454332e03c35ca8808875cd72b">Libcam2OpenCV::registerCallback</a></div><div class="ttdeci">void registerCallback(OnFrame cb)</div><div class="ttdef"><b>Definition</b> libcam2opencv.h:103</div></div>
 <div class="ttc" id="astructLibcam2OpenCVSettings_html"><div class="ttname"><a href="structLibcam2OpenCVSettings.html">Libcam2OpenCVSettings</a></div><div class="ttdef"><b>Definition</b> libcam2opencv.h:34</div></div>
 <div class="ttc" id="astructLibcam2OpenCVSettings_html_a0b62dc579269cccde9c39559a53f850a"><div class="ttname"><a href="structLibcam2OpenCVSettings.html#a0b62dc579269cccde9c39559a53f850a">Libcam2OpenCVSettings::lensPosition</a></div><div class="ttdeci">float lensPosition</div><div class="ttdef"><b>Definition</b> libcam2opencv.h:83</div></div>
 <div class="ttc" id="astructLibcam2OpenCVSettings_html_a143e650a450728ae200c4b12f6d69ac4"><div class="ttname"><a href="structLibcam2OpenCVSettings.html#a143e650a450728ae200c4b12f6d69ac4">Libcam2OpenCVSettings::cameraIndex</a></div><div class="ttdeci">unsigned int cameraIndex</div><div class="ttdef"><b>Definition</b> libcam2opencv.h:38</div></div>
@@ -196,7 +197,7 @@ $(document).ready(function() { init_codefold(0); });
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Apr 16 2026 11:44:51 for libcamera2opencv by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Thu Apr 16 2026 12:14:33 for libcamera2opencv by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
