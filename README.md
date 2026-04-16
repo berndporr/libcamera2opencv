@@ -89,13 +89,13 @@ check the framerate.
 
 ### QT Image Viewer
 
-The subdirectory `qtviewer` contains a simple QT application which displays the camera on screen.
+The subdirectory `qtviewer` contains a simple QT application which displays the camera on screen. This shows also shows how the callback triggers QT's window update without resorting to message queues as it deals with the heavy lifting itself. The callback returns as quickly as possible.
 
 ![alt tag](qtviewer_screenshot.png)
 
 ### Dual Camera Viewer
 
-The subdirectory `dualcamviewer` contains a QT application which displays two cameras on screen.
+The subdirectory `dualcamviewer` contains a QT application which displays two cameras on screen. The Raspberry PI allows 2 cameras to be connected and you see how two callbacks per camera can be set up. Again, it demos how the image update is handled with QT's upated() command keeping the callback as short as possible and leaving it to QT to do the actual displaying.
 
 ## Credits
 
