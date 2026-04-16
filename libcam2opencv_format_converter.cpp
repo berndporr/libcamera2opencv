@@ -46,9 +46,11 @@ void FormatConverter::start(const libcamera::PixelFormat format, int width, int 
 	if (nativeInputFormat == format)
 	{
 		formatFamily_ = NATIVE;
+		// Nothing to do here further as we can directly return a cv::Mat pointing to the framebuffer!
 		return;
 	}
 
+	// If the format is not native we need to convert to openCVs BGR format.
 	switch (format)
 	{
 	case libcamera::formats::NV12:

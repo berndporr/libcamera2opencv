@@ -32,11 +32,14 @@ public:
 	 * The input format which won't require any conversion. libcamera should be
 	 * told to use this format so that ideally no conversion or even memory
 	 * allocation is needed here at all.
+	 * Note that libcamera::formats::RGB888 actually is BGR (!) so that it's compatible
+	 * with openCV's BGR and thus won't need conversion.
 	 */
 	static constexpr libcamera::PixelFormat nativeInputFormat = libcamera::formats::RGB888;
 
 	/**
 	 * The output openCV format no matter what libcamera's native input format is.
+	 * We always output 8 bit unsigned BGR, the native openCV format.
 	 */
 	static constexpr int openCVoutputFormat = CV_8UC3;
 
@@ -55,6 +58,9 @@ public:
 	 */
 	void stop();
 
+	/**
+	 * Destroy the Format Converter object. This also frees up any internal memory.
+	 */
 	~FormatConverter()
 	{
 		stop();
@@ -79,8 +85,24 @@ private:
 	};
 
 	void yuv_to_rgb(const int y, const int u, const int v, int *r, int *g, int *b) const;
+
+	/**
+	 * Motion JPEG decoding.
+	 * 
+	 * @param planes There is only a single plane per frame.
+	 * @return cv::Mat The cv Mat in openCV's format.
+	 */
 	cv::Mat convertJPG(const std::vector<libcamera::Span<uint8_t>> &planes);
+
+	/**
+	 * Converts from to BGR from various RGB/RGBA/BGRA formats. Remember that libcamera's
+	 * BGR is actually RGB (!) so needs to be re-shuffled.
+	 * 
+	 * @param planes The planes containing the RGB data.
+	 * @return cv::Mat The openCV BGR Matrix.
+	 */
 	cv::Mat convertRGB(const std::vector<libcamera::Span<uint8_t>> &planes);
+
 	cv::Mat convertYUVPacked(const std::vector<libcamera::Span<uint8_t>> &planes);
 	cv::Mat convertYUVPlanar(const std::vector<libcamera::Span<uint8_t>> &planes);
 	cv::Mat convertYUVSemiPlanar(const std::vector<libcamera::Span<uint8_t>> &planes);
