@@ -8,8 +8,6 @@ project(LibcameraToOpenCVWrapper
 	DESCRIPTION "Makes life easier for people needing to use libcamera"
 	LANGUAGES CXX)
 
-set (CMAKE_EXPORT_COMPILE_COMMANDS 1)
-
 find_package(PkgConfig)
 
 set (CMAKE_CXX_STANDARD 17)
