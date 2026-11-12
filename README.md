@@ -17,9 +17,14 @@ Works with:
 
 ## Prerequisites
 
+This has been designed to compile with the current Raspbian *Debian Trixie*.
+
 ```
 apt install libopencv-dev libcamera-dev libturbojpeg0-dev
 ```
+
+If you want to also get this to compile under other Linux distros
+make sure you install libcamera v0.7.1.
 
 ## Compilation and installation
 
