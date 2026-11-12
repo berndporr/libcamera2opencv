@@ -1,6 +1,7 @@
 #include "libcam2opencv.h"
 #include <stdexcept>
 #include <unistd.h>
+#include <span>
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
@@ -236,7 +237,7 @@ void Libcam2OpenCV::start (libcamera::CameraManager &cm,
                                         PROT_READ | PROT_WRITE, MAP_SHARED,
                                         plane.fd.get (), 0);
                                     framebuffer2memory[buffer.get ()]
-                                        .push_back (libcamera::Span<uint8_t> (
+                                        .push_back (std::span<uint8_t> (
                                             static_cast<uint8_t *> (memory),
                                             buffer_size));
                                     buffer_size = 0;
@@ -311,7 +312,7 @@ void Libcam2OpenCV::start (libcamera::CameraManager &cm,
     if (settings.framerate > 0)
         {
             const int64_t frame_time = 1000000 / settings.framerate; // in us
-            const auto frameRateRange = libcamera::Span<const int64_t, 2> (
+            const auto frameRateRange = std::span<const int64_t, 2> (
                 { frame_time, frame_time });
             controls.set (libcamera::controls::FrameDurationLimits,
                           frameRateRange);

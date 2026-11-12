@@ -20,6 +20,7 @@
 #include <opencv2/opencv.hpp>
 #include <turbojpeg.h>
 #include <vector>
+#include <span>
 
 /**
  * Format converter from any libcamera format to openCV's
@@ -70,7 +71,7 @@ class FormatConverter
      * @param planes The libcamera planes which contain the raw image.
      * @return cv::Mat The openCV matrix which contains the converted image.
      */
-    cv::Mat convert (const std::vector<libcamera::Span<uint8_t> > &planes);
+    cv::Mat convert (const std::vector<std::span<uint8_t> > &planes);
 
   private:
     enum FormatFamily
@@ -92,7 +93,7 @@ class FormatConverter
      * @param planes There is only a single plane per frame.
      * @return cv::Mat The cv Mat in openCV's format.
      */
-    cv::Mat convertJPG (const std::vector<libcamera::Span<uint8_t> > &planes);
+    cv::Mat convertJPG (const std::vector<std::span<uint8_t> > &planes);
 
     /**
      * Converts from to BGR from various RGB/RGBA/BGRA formats. Remember that
@@ -101,14 +102,14 @@ class FormatConverter
      * @param planes The planes containing the RGB data.
      * @return cv::Mat The openCV BGR Matrix.
      */
-    cv::Mat convertRGB (const std::vector<libcamera::Span<uint8_t> > &planes);
+    cv::Mat convertRGB (const std::vector<std::span<uint8_t> > &planes);
 
     cv::Mat
-    convertYUVPacked (const std::vector<libcamera::Span<uint8_t> > &planes);
+	convertYUVPacked (const std::vector<std::span<uint8_t> > &planes);
     cv::Mat
-    convertYUVPlanar (const std::vector<libcamera::Span<uint8_t> > &planes);
+	convertYUVPlanar (const std::vector<std::span<uint8_t> > &planes);
     cv::Mat convertYUVSemiPlanar (
-        const std::vector<libcamera::Span<uint8_t> > &planes);
+				  const std::vector<std::span<uint8_t> > &planes);
 
     libcamera::PixelFormat format_;
     unsigned int width_;

@@ -189,7 +189,7 @@ void FormatConverter::start (const libcamera::PixelFormat format, int width,
 }
 
 cv::Mat
-FormatConverter::convert (const std::vector<libcamera::Span<uint8_t> > &planes)
+FormatConverter::convert (const std::vector<std::span<uint8_t> > &planes)
 {
     switch (formatFamily_)
         {
@@ -224,7 +224,7 @@ void FormatConverter::yuv_to_rgb (const int y, const int u, const int v,
 }
 
 cv::Mat FormatConverter::convertJPG (
-    const std::vector<libcamera::Span<uint8_t> > &planes)
+				     const std::vector<std::span<uint8_t> > &planes)
 {
     int jpegSubsamp, jpegColorspace;
     int w = width_;
@@ -267,7 +267,7 @@ cv::Mat FormatConverter::convertJPG (
 }
 
 cv::Mat FormatConverter::convertRGB (
-    const std::vector<libcamera::Span<uint8_t> > &planes)
+				     const std::vector<std::span<uint8_t> > &planes)
 {
     const unsigned char *src = planes[0].data ();
     unsigned char *dstptr = dstImage.data;
@@ -294,7 +294,7 @@ cv::Mat FormatConverter::convertRGB (
 }
 
 cv::Mat FormatConverter::convertYUVPacked (
-    const std::vector<libcamera::Span<uint8_t> > &planes)
+					   const std::vector<std::span<uint8_t> > &planes)
 {
     const unsigned char *src = planes[0].data ();
     unsigned int src_x, src_y, dst_x, dst_y;
@@ -335,7 +335,7 @@ cv::Mat FormatConverter::convertYUVPacked (
 }
 
 cv::Mat FormatConverter::convertYUVPlanar (
-    const std::vector<libcamera::Span<uint8_t> > &planes)
+    const std::vector<std::span<uint8_t> > &planes)
 {
     unsigned int c_stride = stride_ / horzSubSample_;
     unsigned int c_inc = horzSubSample_ == 1 ? 1 : 0;
@@ -381,7 +381,7 @@ cv::Mat FormatConverter::convertYUVPlanar (
 }
 
 cv::Mat FormatConverter::convertYUVSemiPlanar (
-    const std::vector<libcamera::Span<uint8_t> > &planes)
+					       const std::vector<std::span<uint8_t> > &planes)
 {
     unsigned int c_stride = stride_ * (2 / horzSubSample_);
     unsigned int c_inc = horzSubSample_ == 1 ? 2 : 0;

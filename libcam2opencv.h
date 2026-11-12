@@ -119,7 +119,7 @@ class Libcam2OpenCV
 
   private:
     std::shared_ptr<libcamera::Camera> camera;
-    std::map<libcamera::FrameBuffer *, std::vector<libcamera::Span<uint8_t> > >
+    std::map<libcamera::FrameBuffer *, std::vector<std::span<uint8_t> > >
         framebuffer2memory;
     std::unique_ptr<libcamera::CameraConfiguration> config;
     OnFrame onFrame;
