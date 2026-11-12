@@ -15,10 +15,15 @@ int main(int argc, char *argv[])
 	window.show();
 
 	Libcam2OpenCV camera;
+	Libcam2OpenCVSettings settings;
+	if (argc > 1) {   
+	    settings.cameraIndex = atoi(argv[1]);
+	}
+	
 	camera.registerCallback([&](const cv::Mat &mat, const libcamera::ControlList &)
 							{ window.updateImage(mat); });
 
-	camera.start(cm);
+	camera.start(cm,settings);
 
 	// execute the application
 	const int r = app.exec();
